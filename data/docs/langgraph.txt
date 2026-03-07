@@ -1,0 +1,24 @@
+LangGraph: Building Stateful Multi-Actor Applications
+
+LangGraph is a library for building stateful, multi-actor applications with Large Language Models (LLMs). It is built on top of LangChain and provides a framework for creating complex agent workflows.
+
+Key Features:
+- State Management: LangGraph provides built-in state management for agent workflows
+- Graph-based Architecture: Define workflows as directed graphs with nodes and edges
+- Cyclic Graphs: Support for cycles in the graph, enabling iterative workflows
+- Persistence: Built-in checkpointing and persistence for long-running workflows
+- Human-in-the-Loop: Easy integration of human feedback and approval steps
+
+Core Concepts:
+1. Nodes: Individual processing steps or agent actions
+2. Edges: Connections between nodes that define the flow
+3. State: Shared state that flows through the graph
+4. Conditional Edges: Dynamic routing based on state or conditions
+
+Use Cases:
+- Multi-agent systems with complex interactions
+- Workflows requiring human approval or feedback
+- Iterative refinement processes
+- Long-running agent tasks with checkpointing
+
+LangGraph is ideal for production-grade agent applications that require reliability, observability, and complex control flow.

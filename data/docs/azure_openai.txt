@@ -1,0 +1,41 @@
+Azure OpenAI Service
+
+Azure OpenAI Service provides REST API access to OpenAI's powerful language models including GPT-4, GPT-3.5-Turbo, and Embeddings models. The service combines OpenAI's capabilities with Azure's enterprise-grade security and compliance.
+
+Key Models:
+1. GPT-4: Most capable model for complex reasoning and generation
+2. GPT-4o: Optimized version with better performance
+3. GPT-4o-mini: Smaller, faster, and more cost-effective variant
+4. GPT-3.5-Turbo: Fast and efficient for most tasks
+5. text-embedding-3-small: Efficient embedding model
+6. text-embedding-3-large: Higher quality embeddings
+
+GPT-4o-mini Features:
+- Cost-effective: Significantly cheaper than GPT-4
+- Fast: Lower latency for quick responses
+- Capable: Handles most common tasks effectively
+- Context: 128K token context window
+- Multimodal: Supports text and image inputs
+
+Embedding Models:
+- text-embedding-3-small: 1536 dimensions, fast and efficient
+- text-embedding-3-large: 3072 dimensions, higher quality
+- Use cases: Semantic search, clustering, recommendations
+
+Best Practices:
+1. Use GPT-4o-mini for cost-sensitive applications
+2. Implement retry logic with exponential backoff
+3. Cache responses when appropriate
+4. Monitor token usage and costs
+5. Use streaming for better user experience
+6. Implement rate limiting and throttling
+7. Use structured outputs for reliable parsing
+
+Security Features:
+- Private endpoints for network isolation
+- Managed identity support
+- Data encryption at rest and in transit
+- Compliance certifications (SOC 2, ISO 27001, HIPAA)
+- Content filtering and safety features
+
+Azure OpenAI is ideal for enterprise applications requiring both AI capabilities and robust security and compliance features.

@@ -1,0 +1,31 @@
+FAISS: Facebook AI Similarity Search
+
+FAISS (Facebook AI Similarity Search) is a library for efficient similarity search and clustering of dense vectors. It is developed by Facebook AI Research and is widely used in production systems.
+
+Key Features:
+- Fast Similarity Search: Optimized algorithms for nearest neighbor search
+- Scalability: Can handle billions of vectors
+- GPU Support: Accelerated search using CUDA
+- Multiple Index Types: Various index structures for different use cases
+- Memory Efficiency: Compressed representations to reduce memory footprint
+
+Index Types:
+1. IndexFlatL2: Exact search using L2 distance (brute force)
+2. IndexIVFFlat: Inverted file index for faster approximate search
+3. IndexHNSW: Hierarchical Navigable Small World graphs
+4. IndexPQ: Product Quantization for memory efficiency
+
+Common Use Cases:
+- Semantic search in document collections
+- Image similarity search
+- Recommendation systems
+- Duplicate detection
+- Clustering large datasets
+
+FAISS is particularly useful for Retrieval-Augmented Generation (RAG) systems where you need to quickly find relevant documents based on semantic similarity.
+
+Performance Considerations:
+- IndexFlatL2 provides exact results but is slower for large datasets
+- IVF indexes offer good balance between speed and accuracy
+- HNSW provides very fast search with high recall
+- Product Quantization reduces memory usage significantly
