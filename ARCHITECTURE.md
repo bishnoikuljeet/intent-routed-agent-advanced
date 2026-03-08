@@ -586,16 +586,16 @@ MCP is a standardized protocol for exposing tools, resources, and prompts to AI 
 ### MCP Server Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    MCP Server Base                          │
-│  • Tool registration                                        │
-│  • Resource management                                      │
-│  • Prompt templates                                         │
-│  • Error handling                                           │
-└─────────────────────────────────────────────────────────────┘
-                              ↑
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
+                             ┌──────────────────────────────────────────┐
+                             │          MCP Server Base                 │
+                             │           • Tool registration            │
+                             │           • Resource management          │
+                             │           • Prompt templates             │
+                             │           • Error handling               │
+                             └──────────────────────────────────────────┘
+                                                   ↑
+        ┌─────────────────────┼────────────────────┼──────────────────┼───────────────────┐
+        │                     │                    │                  │                   │
 ┌───────────────┐  ┌──────────────────┐  ┌─────────────────┐  ┌───────────────┐  ┌──────────────────┐
 │ Observability │  │    Knowledge     │  │    Language     │  │    Utility    │  │     System       │
 │    Server     │  │      Server      │  │     Server      │  │    Server     │  │     Server       │
@@ -692,7 +692,7 @@ MCP is a standardized protocol for exposing tools, resources, and prompts to AI 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Memory Manager                            │
+│                    Memory Manager                           │
 │  File: app/memory/manager.py                                │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -791,52 +791,52 @@ class MemoryManager:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Input Processing                          │
+│                    Input Processing                         │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│              Step 1: Language Detection                      │
+│              Step 1: Language Detection                     │
 │  • LLM-based detection (more accurate than libraries)       │
 │  • Confidence scoring                                       │
 │  • Fallback to langdetect library                           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│           Step 2: Input Sanitization                         │
+│           Step 2: Input Sanitization                        │
 │  • Remove control characters                                │
 │  • Normalize whitespace                                     │
 │  • Validate length (max 5000 chars)                         │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│         Step 3: Prompt Injection Detection                   │
+│         Step 3: Prompt Injection Detection                  │
 │  • Pattern matching for common attacks                      │
 │  • LLM-based safety check                                   │
 │  • Reject suspicious inputs                                 │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│            Step 4: Translation to English                    │
+│            Step 4: Translation to English                   │
 │  • If detected language != English                          │
 │  • Use deep-translator library                              │
 │  • Preserve intent and meaning                              │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│               Process in English                             │
+│               Process in English                            │
 │  • All agents work in English                               │
 │  • Consistent processing                                    │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│         Step 5: Translation to Original Language             │
+│         Step 5: Translation to Original Language            │
 │  • Translate final answer back                              │
 │  • Preserve formatting                                      │
 │  • Maintain technical terms                                 │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                    Output Response                           │
+│                    Output Response                          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -1161,23 +1161,23 @@ class Telemetry:
 ### Query Processing Data Flow
 
 ```
-┌─────────────┐
-│ User Query  │
-└──────┬──────┘
-       │
-       ↓
+             ┌─────────────┐
+             │ User Query  │
+             └──────┬──────┘
+                    │
+                    ↓
 ┌─────────────────────────────────────────┐
 │  Language Processor                     │
-│  Input: "¿Cuál es la latencia?"        │
+│  Input: "¿Cuál es la latencia?"         │
 │  Output: {                              │
 │    "detected_language": "es",           │
 │    "translated_query": "What is the     │
 │                         latency?",      │
 │    "sanitized": true                    │
 │  }                                      │
-└──────┬──────────────────────────────────┘
-       │
-       ↓
+└────────────────────┬────────────────────┘
+                     │
+                     ↓
 ┌─────────────────────────────────────────┐
 │  Memory Manager                         │
 │  Output: {                              │
@@ -1185,9 +1185,9 @@ class Telemetry:
 │    "summary": "Previous discussion...", │
 │    "relevant_context": [...]            │
 │  }                                      │
-└──────┬──────────────────────────────────┘
-       │
-       ↓
+└────────────────────┬────────────────────┘
+                     │
+                     ↓
 ┌─────────────────────────────────────────┐
 │  Intent Agent                           │
 │  Output: {                              │
@@ -1197,9 +1197,9 @@ class Telemetry:
 │    },                                   │
 │    "confidence": 0.95                   │
 │  }                                      │
-└──────┬──────────────────────────────────┘
-       │
-       ↓
+└────────────────────┬────────────────────┘
+                     │
+                     ↓
 ┌─────────────────────────────────────────┐
 │  Planner Agent                          │
 │  Output: {                              │
@@ -1210,9 +1210,9 @@ class Telemetry:
 │      }                                  │
 │    ]                                    │
 │  }                                      │
-└──────┬──────────────────────────────────┘
-       │
-       ↓
+└────────────────────┬────────────────────┘
+                     │
+                     ↓
 ┌─────────────────────────────────────────┐
 │  Executor Agent                         │
 │  Output: [                              │
@@ -1222,18 +1222,18 @@ class Telemetry:
 │      "success": true                    │
 │    }                                    │
 │  ]                                      │
-└──────┬──────────────────────────────────┘
-       │
-       ↓
+└────────────────────┬────────────────────┘
+                     │
+                     ↓
 ┌─────────────────────────────────────────┐
 │  Aggregator Agent                       │
 │  Output: {                              │
 │    "key_findings": [...],               │
 │    "structured_data": {...}             │
 │  }                                      │
-└──────┬──────────────────────────────────┘
-       │
-       ↓
+└────────────────────┬────────────────────┘
+                     │
+                     ↓
 ┌─────────────────────────────────────────┐
 │  Reasoning Agent                        │
 │  Output: {                              │
@@ -1241,33 +1241,33 @@ class Telemetry:
 │    "evidence": [...],                   │
 │    "confidence": 0.9                    │
 │  }                                      │
-└──────┬──────────────────────────────────┘
-       │
-       ↓
+└────────────────────┬────────────────────┘
+                     │
+                     ↓
 ┌─────────────────────────────────────────┐
 │  Self-Evaluation Agent                  │
 │  Output: {                              │
 │    "confidence": 0.9,                   │
 │    "should_retry": false                │
 │  }                                      │
-└──────┬──────────────────────────────────┘
-       │
-       ↓
+└────────────────────┬────────────────────┘
+                     │
+                     ↓
 ┌─────────────────────────────────────────┐
 │  Answer Agent                           │
 │  Output: "The latency is 120ms..."      │
-└──────┬──────────────────────────────────┘
-       │
-       ↓
+└────────────────────┬────────────────────┘
+                     │
+                     ↓
 ┌─────────────────────────────────────────┐
 │  Translation Layer                      │
 │  Output: "La latencia es 120ms..."      │
-└──────┬──────────────────────────────────┘
-       │
-       ↓
-┌─────────────┐
-│  Response   │
-└─────────────┘
+└────────────────────┬────────────────────┘
+                     │
+                     ↓
+              ┌─────────────┐
+              │   Response  │
+              └─────────────┘
 ```
 
 ---
