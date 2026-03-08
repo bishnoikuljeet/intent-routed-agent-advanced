@@ -97,58 +97,58 @@ Each agent has a single, well-defined responsibility:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Presentation Layer                       │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐ │
-│  │  Streamlit UI   │  │   FastAPI REST  │  │  CLI Tool   │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────┘ │
+│                     Presentation Layer                      │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐  │
+│  │  Streamlit UI   │  │   FastAPI REST  │  │  CLI Tool   │  │
+│  └─────────────────┘  └─────────────────┘  └─────────────┘  │
 └─────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────┐
-│                    Orchestration Layer                       │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │         AgentOrchestrator (Main Entry Point)        │   │
-│  │  - Initializes all components                       │   │
-│  │  - Manages agent lifecycle                          │   │
-│  │  - Coordinates workflow execution                   │   │
-│  └─────────────────────────────────────────────────────┘   │
+│                    Orchestration Layer                      │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │        AgentOrchestrator (Main Entry Point)         │   │
+│   │         - Initializes all components                │   │
+│   │         - Manages agent lifecycle                   │   │
+│   │         - Coordinates workflow execution            │   │
+│   └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────┐
-│                      Agent Layer                             │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │Coordinator│→│  Intent  │→│ Planner  │→│ Executor │   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
-│                                                ↓             │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │  Answer  │←│Evaluation│←│Reasoning │←│Aggregator│   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
+│                        Agent Layer                          │
+│     ┌───────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐    │
+│     │Coordinator│→│  Intent  │→│ Planner  │→│ Executor │    │
+│     └───────────┘ └──────────┘ └──────────┘ └──────────┘    │
+│                                                   ↓         │
+│     ┌───────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐    │
+│     │  Answer   │←│Evaluation│←│Reasoning │←│Aggregator│    │
+│     └───────────┘ └──────────┘ └──────────┘ └──────────┘    │
 └─────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────┐
-│                      Service Layer                           │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐    │
-│  │   Memory    │  │   Language  │  │  Tool Discovery │    │
-│  │   Manager   │  │  Processor  │  │     Service     │    │
-│  └─────────────┘  └─────────────┘  └─────────────────┘    │
+│                      Service Layer                          │
+│    ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐    │
+│    │   Memory    │  │   Language  │  │  Tool Discovery │    │
+│    │   Manager   │  │  Processor  │  │     Service     │    │
+│    └─────────────┘  └─────────────┘  └─────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────┐
-│                     Integration Layer                        │
-│  ┌──────────────────────────────────────────────────────┐  │
+│                     Integration Layer                       │
+│  ┌───────────────────────────────────────────────────────┐  │
 │  │              MCP Tool Ecosystem                       │  │
-│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐       │  │
-│  │  │Observability│ │ Knowledge  │ │  Language  │ ...   │  │
-│  │  │   Server   │ │   Server   │ │   Server   │       │  │
-│  │  └────────────┘ └────────────┘ └────────────┘       │  │
-│  └──────────────────────────────────────────────────────┘  │
+│  │   ┌─────────────┐ ┌────────────┐ ┌────────────┐       │  │
+│  │   │Observability│ │ Knowledge  │ │  Language  │ ...   │  │
+│  │   │    Server   │ │   Server   │ │   Server   │       │  │
+│  │   └─────────────┘ └────────────┘ └────────────┘       │  │
+│  └───────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────┐
-│                      Data Layer                              │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐    │
-│  │    FAISS    │  │   Session   │  │   Tool Vector   │    │
-│  │Vector Store │  │   Storage   │  │      Store      │    │
-│  └─────────────┘  └─────────────┘  └─────────────────┘    │
+│                      Data Layer                             │
+│    ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐    │
+│    │    FAISS    │  │   Session   │  │   Tool Vector   │    │
+│    │Vector Store │  │   Storage   │  │      Store      │    │
+│    └─────────────┘  └─────────────┘  └─────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -160,11 +160,11 @@ Each agent has a single, well-defined responsibility:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      User Query Input                        │
+│                      User Query Input                       │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                  Language Processing Layer                   │
+│                  Language Processing Layer                  │
 │  • Detect language (LLM-based)                              │
 │  • Normalize and sanitize input                             │
 │  • Detect prompt injection attempts                         │
@@ -172,21 +172,21 @@ Each agent has a single, well-defined responsibility:
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                     Memory Manager                           │
+│                     Memory Manager                          │
 │  • Retrieve relevant conversation history                   │
 │  • Summarize older messages (if threshold exceeded)         │
 │  • Semantic search over past interactions                   │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                   Coordinator Agent                          │
+│                   Coordinator Agent                         │
 │  • Initialize workflow state                                │
 │  • Attach request metadata                                  │
 │  • Start execution trace                                    │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                     Intent Agent                             │
+│                     Intent Agent                            │
 │  • LLM-based intent classification                          │
 │  • Entity extraction                                        │
 │  • Intent categories:                                       │
@@ -198,7 +198,7 @@ Each agent has a single, well-defined responsibility:
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                     Planner Agent                            │
+│                     Planner Agent                           │
 │  • Query tool registry (semantic search)                    │
 │  • LLM selects relevant tools                               │
 │  • Generate step-by-step execution plan                     │
@@ -207,7 +207,7 @@ Each agent has a single, well-defined responsibility:
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                    Executor Agent                            │
+│                    Executor Agent                           │
 │  • Execute tools via MCP protocol                           │
 │  • Parallel execution (asyncio.gather)                      │
 │  • Sequential execution (for dependencies)                  │
@@ -217,7 +217,7 @@ Each agent has a single, well-defined responsibility:
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                   Aggregator Agent                           │
+│                   Aggregator Agent                          │
 │  • Combine tool results                                     │
 │  • Structure data for reasoning                             │
 │  • Identify patterns and key findings                       │
@@ -225,7 +225,7 @@ Each agent has a single, well-defined responsibility:
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                   Reasoning Agent                            │
+│                   Reasoning Agent                           │
 │  • Analyze aggregated data                                  │
 │  • Apply domain knowledge                                   │
 │  • Draw logical conclusions                                 │
@@ -234,7 +234,7 @@ Each agent has a single, well-defined responsibility:
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                 Self-Evaluation Agent                        │
+│                 Self-Evaluation Agent                       │
 │  • Assess answer quality                                    │
 │  • Compute confidence score                                 │
 │  • Validate reasoning                                       │
@@ -242,10 +242,10 @@ Each agent has a single, well-defined responsibility:
 │  • Max retries: 2                                           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
-                    ┌─────────────────┐
+                    ┌──────────────────┐
                     │ Confidence < 0.7 │
                     │ AND retries < 2? │
-                    └─────────────────┘
+                    └──────────────────┘
                        Yes ↓    ↓ No
                            ↓    ↓
                     ┌──────┘    └──────┐
@@ -256,7 +256,7 @@ Each agent has a single, well-defined responsibility:
             └───────────────┘  └──────────────┘
                                       ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                     Answer Agent                             │
+│                     Answer Agent                            │
 │  • Generate natural language response                       │
 │  • Incorporate reasoning and evidence                       │
 │  • Provide actionable information                           │
@@ -264,7 +264,7 @@ Each agent has a single, well-defined responsibility:
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                  Translation Layer                           │
+│                  Translation Layer                          │
 │  • Translate answer to user's original language             │
 │  • Preserve formatting and structure                        │
 └─────────────────────────────────────────────────────────────┘
@@ -485,61 +485,61 @@ async def generate_answer(
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    User Query                                │
+│                    User Query                               │
 │  "What is the latency of the auth service?"                 │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│              Step 1: Semantic Tool Search                    │
+│              Step 1: Semantic Tool Search                   │
 │  • Embed query using Azure OpenAI embeddings                │
 │  • Search tool vector store (FAISS)                         │
 │  • Retrieve top-k relevant tools (k=10)                     │
-│                                                              │
-│  Results:                                                    │
+│                                                             │
+│  Results:                                                   │
 │  1. service_metrics (similarity: 0.92)                      │
 │  2. latency_history (similarity: 0.88)                      │
 │  3. service_status (similarity: 0.75)                       │
 │  4. error_rate_lookup (similarity: 0.68)                    │
-│  ...                                                         │
+│  ...                                                        │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│           Step 2: LLM-Based Tool Selection                   │
+│           Step 2: LLM-Based Tool Selection                  │
 │  Prompt to LLM:                                             │
 │  "Given the query and these tool descriptions,              │
 │   select the most relevant tools and explain why."          │
-│                                                              │
+│                                                             │
 │  LLM Response:                                              │
-│  {                                                           │
+│  {                                                          │
 │    "selected_tools": [                                      │
-│      {                                                       │
+│      {                                                      │
 │        "name": "service_metrics",                           │
 │        "reason": "Directly retrieves current latency",      │
 │        "params": {"service_name": "auth",                   │
 │                   "metric_type": "latency"}                 │
-│      }                                                       │
-│    ],                                                        │
+│      }                                                      │
+│    ],                                                       │
 │    "execution_strategy": "single_tool_sufficient"           │
-│  }                                                           │
+│  }                                                          │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│              Step 3: Execution Plan Generation               │
-│  {                                                           │
+│              Step 3: Execution Plan Generation              │
+│  {                                                          │
 │    "steps": [                                               │
-│      {                                                       │
+│      {                                                      │
 │        "step": 1,                                           │
 │        "tool": "service_metrics",                           │
 │        "params": {                                          │
 │          "service_name": "auth",                            │
 │          "metric_type": "latency"                           │
-│        },                                                    │
+│        },                                                   │
 │        "parallel_group": null                               │
-│      }                                                       │
-│    ],                                                        │
+│      }                                                      │
+│    ],                                                       │
 │    "reasoning": "Single tool call sufficient",              │
 │    "estimated_duration_ms": 500                             │
-│  }                                                           │
+│  }                                                          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -587,7 +587,7 @@ MCP is a standardized protocol for exposing tools, resources, and prompts to AI 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    MCP Server Base                           │
+│                    MCP Server Base                          │
 │  • Tool registration                                        │
 │  • Resource management                                      │
 │  • Prompt templates                                         │
@@ -596,24 +596,15 @@ MCP is a standardized protocol for exposing tools, resources, and prompts to AI 
                               ↑
         ┌─────────────────────┼─────────────────────┐
         │                     │                     │
-┌───────────────┐  ┌──────────────────┐  ┌─────────────────┐
-│ Observability │  │    Knowledge     │  │    Language     │
-│    Server     │  │      Server      │  │     Server      │
-│               │  │                  │  │                 │
-│ • Metrics     │  │ • Semantic       │  │ • Translation   │
-│ • Latency     │  │   Search         │  │ • Detection     │
-│ • Errors      │  │ • Documents      │  │ • Normalization │
-│ • Status      │  │ • Policies       │  │                 │
-└───────────────┘  └──────────────────┘  └─────────────────┘
-
-┌───────────────┐  ┌──────────────────┐
-│    Utility    │  │     System       │
-│    Server     │  │     Server       │
-│               │  │                  │
-│ • Compare     │  │ • Registry       │
-│ • Calculate   │  │ • Health         │
-│ • Statistics  │  │ • Workflow       │
-└───────────────┘  └──────────────────┘
+┌───────────────┐  ┌──────────────────┐  ┌─────────────────┐  ┌───────────────┐  ┌──────────────────┐
+│ Observability │  │    Knowledge     │  │    Language     │  │    Utility    │  │     System       │
+│    Server     │  │      Server      │  │     Server      │  │    Server     │  │     Server       │
+│               │  │                  │  │                 │  │               │  │                  │
+│ • Metrics     │  │ • Semantic       │  │ • Translation   │  │ • Compare     │  │ • Registry       │
+│ • Latency     │  │   Search         │  │ • Detection     │  │ • Calculate   │  │ • Health         │
+│ • Errors      │  │ • Documents      │  │ • Normalization │  │ • Statistics  │  │ • Workflow       │
+│ • Status      │  │ • Policies       │  │                 │  │               │  │                  │
+└───────────────┘  └──────────────────┘  └─────────────────┘  └───────────────┘  └──────────────────┘
 ```
 
 ### Available MCP Servers
