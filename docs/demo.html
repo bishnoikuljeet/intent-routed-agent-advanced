@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intent-Routed Agent Advanced - Demo Video</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .video-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        video {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        .download-section {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f1f3f4;
+            border-radius: 8px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #0366d6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .btn:hover {
+            background: #0256cc;
+        }
+        .info {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Intent-Routed Agent Advanced</h1>
+            <h2>Demo Video</h2>
+            <p>Production-grade multi-agent AI platform with LLM-driven tool selection</p>
+        </div>
+
+        <div class="video-container">
+            <video width="900" controls autoplay muted loop style="border-radius: 12px;">
+                <source src="https://raw.githubusercontent.com/bishnoikuljeet/intent-routed-agent-advanced/main/assets/demos/demo.mp4" type="video/mp4">
+                <p>Your browser does not support the video tag.</p>
+            </video>
+        </div>
+
+        <div class="download-section">
+            <h3>📥 Download Demo Video</h3>
+            <p>Get the full demo video for offline viewing</p>
+            <a href="https://raw.githubusercontent.com/bishnoikuljeet/intent-routed-agent-advanced/main/assets/demos/demo.mp4" 
+               class="btn" download="intent-routed-agent-demo.mp4">
+                Download MP4 (28.9 MB)
+            </a>
+        </div>
+
+        <div class="info">
+            <p><strong>Video Features:</strong> Multi-agent workflow | Tool selection | Intent classification | Real-time processing</p>
+            <p><a href="https://github.com/bishnoikuljeet/intent-routed-agent-advanced">← Back to Repository</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Optional: Track video analytics
+        const video = document.querySelector('video');
+        video.addEventListener('play', () => {
+            console.log('Demo video started playing');
+        });
+        video.addEventListener('ended', () => {
+            console.log('Demo video finished');
+        });
+    </script>
+</body>
+</html>
