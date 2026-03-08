@@ -5,21 +5,24 @@ Production-grade multi-agent AI platform with LLM-driven tool selection, multili
 ## 📺 Demo Video
 
 ### 🎥 Watch the Demo
-- **[📹 Play Demo Video](https://raw.githubusercontent.com/bishnoikuljeet/intent-routed-agent-advanced/main/assets/demos/demo.mp4)** (Direct playback)
-- **[📥 Download Demo Video](https://raw.githubusercontent.com/bishnoikuljeet/intent-routed-agent-advanced/main/assets/demos/demo.mp4)** (Right-click → Save)
+- **[📹 Play Demo Video](https://drive.google.com/file/d/16IgYvd7EuEy5TeIDfxMcpfhighDZmhJI/preview)** (Google Drive)
 
 <details>
-<summary>� Embed Video in HTML</summary>
+<summary>🔧 Embed Video in HTML</summary>
 
 ```html
-<!-- Auto-play video with controls -->
-<video width="800" controls autoplay muted style="max-width: 100%; border-radius: 8px;">
-  <source src="https://raw.githubusercontent.com/bishnoikuljeet/intent-routed-agent-advanced/main/assets/demos/demo.mp4" type="video/mp4">
-  <p>Your browser does not support the video tag.</p>
-</video>
+<!-- Google Drive embed iframe -->
+<iframe src="https://drive.google.com/file/d/16IgYvd7EuEy5TeIDfxMcpfhighDZmhJI/preview" 
+        width="640" height="480" 
+        style="max-width: 100%; border-radius: 8px; border: none;"
+        allow="autoplay">
+</iframe>
 
-<!-- Or open dedicated demo page -->
-<a href="docs/demo.html">Open Demo Page</a>
+<!-- Alternative: Direct embed -->
+<iframe src="https://drive.google.com/file/d/16IgYvd7EuEy5TeIDfxMcpfhighDZmhJI/preview" 
+        width="800" height="450" 
+        style="border: none; border-radius: 12px;"
+        allow="autoplay"></iframe>
 ```
 
 </details> 
