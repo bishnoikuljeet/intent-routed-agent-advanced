@@ -7,26 +7,6 @@ Production-grade multi-agent AI platform with LLM-driven tool selection, multili
 ### 🎥 Watch the Demo
 - **[📹 Play Demo Video](https://drive.google.com/file/d/16IgYvd7EuEy5TeIDfxMcpfhighDZmhJI/preview)** (Google Drive)
 
-<details>
-<summary>🔧 Embed Video in HTML</summary>
-
-```html
-<!-- Google Drive embed iframe -->
-<iframe src="https://drive.google.com/file/d/16IgYvd7EuEy5TeIDfxMcpfhighDZmhJI/preview" 
-        width="640" height="480" 
-        style="max-width: 100%; border-radius: 8px; border: none;"
-        allow="autoplay">
-</iframe>
-
-<!-- Alternative: Direct embed -->
-<iframe src="https://drive.google.com/file/d/16IgYvd7EuEy5TeIDfxMcpfhighDZmhJI/preview" 
-        width="800" height="450" 
-        style="border: none; border-radius: 12px;"
-        allow="autoplay"></iframe>
-```
-
-</details> 
-
 **📹 Demo Video Location**: `assets/demos/demo.mp4`
 
 ---
