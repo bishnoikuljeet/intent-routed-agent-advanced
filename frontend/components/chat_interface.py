@@ -51,7 +51,7 @@ class ChatInterface:
             timestamp = message.get('timestamp', '')
             
             if role == 'user':
-                with st.chat_message("user", avatar="�"):
+                with st.chat_message("user", avatar="👤"):
                     st.markdown(content)
                     if timestamp:
                         st.caption(f"🕐 {timestamp}")
