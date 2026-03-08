@@ -4,7 +4,12 @@ Production-grade multi-agent AI platform with LLM-driven tool selection, multili
 
 ## 📺 Demo Video
 
-[![Demo Video](https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=VIDEO_ID)
+### 🎥 Watch the Demo
+- **[Watch on GitHub Pages](https://bishnoikuljeet.github.io/intent-routed-agent-advanced/assets/demos/demo.mp4)** 
+
+**📹 Demo Video Location**: `assets/demos/demo.mp4`
+
+---
 
 ## 🎯 Overview
 
