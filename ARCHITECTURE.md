@@ -126,10 +126,10 @@ Each agent has a single, well-defined responsibility:
                               │
 ┌─────────────────────────────────────────────────────────────┐
 │                      Service Layer                          │
-│    ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐    │
-│    │   Memory    │  │   Language  │  │  Tool Discovery │    │
-│    │   Manager   │  │  Processor  │  │     Service     │    │
-│    └─────────────┘  └─────────────┘  └─────────────────┘    │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  ┌──────────────────┐ │
+│  │   Memory    │  │   Language  │  │  Tool Discovery │  │  Context Service │ │
+│  │   Manager   │  │  Processor  │  │     Service     │  │                  │ │
+│  └─────────────┘  └─────────────┘  └─────────────────┘  └──────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────┐
@@ -256,11 +256,12 @@ Each agent has a single, well-defined responsibility:
             └───────────────┘  └──────────────┘
                                       ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                     Answer Agent                            │
-│  • Generate natural language response                       │
-│  • Incorporate reasoning and evidence                       │
-│  • Provide actionable information                           │
-│  • Acknowledge uncertainty when appropriate                 │
+│                Tool-First Answer Agent                       │
+│  • Tool-first approach (always requires tool execution)      │
+│  • Uses ToolDiscoveryService for dynamic tool selection     │
+│  • RAG-based tool discovery with embeddings                  │
+│  • Polite decline with capabilities if no tools available   │
+│  • ContextService for enhanced context management           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -270,7 +271,7 @@ Each agent has a single, well-defined responsibility:
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                    Final Response                            │
+│                    Final Response                           │
 │  • Answer text                                              │
 │  • Confidence score                                         │
 │  • Execution trace                                          │
@@ -594,7 +595,7 @@ MCP is a standardized protocol for exposing tools, resources, and prompts to AI 
                              │           • Error handling               │
                              └──────────────────────────────────────────┘
                                                    ↑
-        ┌─────────────────────┼────────────────────┼──────────────────┼───────────────────┐
+        ┌─────────────────────┬────────────────────┼──────────────────┬───────────────────┐
         │                     │                    │                  │                   │
 ┌───────────────┐  ┌──────────────────┐  ┌─────────────────┐  ┌───────────────┐  ┌──────────────────┐
 │ Observability │  │    Knowledge     │  │    Language     │  │    Utility    │  │     System       │
@@ -683,6 +684,58 @@ MCP is a standardized protocol for exposing tools, resources, and prompts to AI 
 - System introspection
 - Health checks
 - Workflow monitoring
+
+---
+
+## Tool Discovery & Context Services
+
+### Tool Discovery Service
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 Tool Discovery Service                      │
+│  File: app/services/tool_discovery_service.py              │
+└─────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+┌───────────────┐  ┌──────────────────┐  ┌─────────────────┐
+│   Static      │  │   Dynamic        │  │   RAG-Based     │
+│   Registry    │  │   Discovery      │  │   Discovery     │
+│               │  │                  │  │                 │
+│ • ALL_TOOLS_  │  • Runtime server  │  • Semantic      │
+│   REGISTRY    │  • registration    │  • search        │
+│ • Pre-defined │  • Live updates    │  • Embeddings    │
+│ • Metadata    │  • Health checks   │  • Tool vectors  │
+└───────────────┘  └──────────────────┘  └─────────────────┘
+```
+
+**Key Features**:
+- **Static Registry**: Pre-defined tools from `ALL_TOOLS_REGISTRY.py`
+- **Dynamic Discovery**: Runtime server registration and health checks
+- **RAG-Based Discovery**: Semantic search using embeddings and vector stores
+- **Tool Vectors**: Embeddings for semantic tool matching
+- **Comprehensive Cache**: Enhanced metadata with capabilities and examples
+
+### Context Service
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   Context Service                           │
+│  File: app/services/context_service.py                     │
+└─────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+┌───────────────┐  ┌──────────────────┐  ┌─────────────────┐
+│  Conversation │  │   Tool           │  │   System        │
+│  Context      │  │   Context       │  │   Context       │
+│               │  │                  │  │                 │
+│ • Chat history│  • Tool results    │  • Agent states   │
+│ • User prefs  │  • Execution trace │  • System health  │
+│ • Session data│  • Cache status    │  • Metrics        │
+└───────────────┘  └──────────────────┘  └─────────────────┘
+```
 
 ---
 
