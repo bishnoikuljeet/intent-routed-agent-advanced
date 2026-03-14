@@ -215,12 +215,22 @@ class ToolFirstAnswerAgent:
                 still_missing = [p for p in required_params if p not in enhanced_params or enhanced_params[p] is None]
                 
                 if still_missing:
+                    # Set clarification flags so answer agent generates follow-up questions
+                    missing_info = {
+                        "needs_clarification": True,
+                        "clarification_type": "missing_parameters",
+                        "missing_information": still_missing,
+                        "reasoning": f"The {selected_tool['name']} tool requires these parameters: {', '.join(still_missing)}",
+                        "suggested_examples": [f"Please provide values for: {', '.join(still_missing)}"],
+                        "suggested_tool": selected_tool,
+                        "extracted_params": enhanced_params
+                    }
+                    
                     return {
                         "success": False,
                         "reason": "missing_parameters",
                         "missing_data": f"Missing required parameters: {', '.join(still_missing)}",
-                        "suggested_tool": selected_tool,
-                        "extracted_params": enhanced_params
+                        "missing_info": missing_info
                     }
                 
                 params = enhanced_params
@@ -554,30 +564,23 @@ IMPORTANT: Always include all required parameters in your response, even if thei
                     param_desc = param_info.get('description', '')
                     
                     # Smart defaults based on parameter type and description
+                    # Only set defaults for specific, meaningful cases - avoid meaningless defaults
                     if param_type == 'string':
                         if 'service' in param_desc.lower() and 'payment' in query.lower():
                             enhanced_params[param_name] = 'payment-service'
                         elif 'time' in param_desc.lower() or 'date' in param_desc.lower():
                             enhanced_params[param_name] = 'current'
-                        else:
-                            # Extract from context or query
-                            if param_name.lower() in context_enhanced_query.lower():
-                                enhanced_params[param_name] = param_name
-                            else:
-                                enhanced_params[param_name] = 'default'
+                        # Otherwise leave as None - don't use meaningless defaults
                     elif param_type == 'number':
-                        if 'latency' in param_desc.lower():
-                            enhanced_params[param_name] = 100  # Default latency in ms
-                        elif 'threshold' in param_desc.lower():
-                            enhanced_params[param_name] = 0.95  # Default threshold
-                        else:
-                            enhanced_params[param_name] = 0
+                        # DO NOT set default numeric values - they are meaningless
+                        # Comparisons with 0, calculations with 0, etc. provide no value
+                        # Leave as None to trigger proper clarification
+                        pass
                     elif param_type == 'boolean':
-                        enhanced_params[param_name] = True
-                    elif param_type == 'array':
-                        enhanced_params[param_name] = []
-                    else:
-                        enhanced_params[param_name] = None
+                        # Only set boolean default if it makes sense in context
+                        if 'enable' in param_desc.lower() or 'active' in param_desc.lower():
+                            enhanced_params[param_name] = True
+                    # For other types, leave as None to trigger clarification
             
             logger.info_structured(
                 "Parameters enhanced with context",
@@ -759,6 +762,7 @@ Generate a concise, friendly description of what this system can help users with
     async def _generate_polite_decline(self, query: str, capabilities: str, missing_data: str) -> str:
         """
         Generate polite decline response with capabilities and specific data requests.
+        Includes follow-up questions to guide the user.
         """
         try:
             messages = [
@@ -777,6 +781,18 @@ Generate a polite response that:
 3. Specifically asks for what information is needed
 4. Is friendly and helpful
 
+IMPORTANT - FOLLOW-UP QUESTIONS:
+After your response, ALWAYS add 2-3 specific follow-up questions that:
+- Guide the user to provide the missing information
+- Give concrete examples of what they can ask
+- Help them understand how to use the available capabilities
+
+Format follow-up questions as:
+**Follow-up questions:**
+- [Specific question about missing info 1]
+- [Example of what they can ask 2]
+- [Alternative way to phrase their request 3]
+
 Keep the response concise and natural.
 """)
             ]
@@ -789,7 +805,7 @@ Keep the response concise and natural.
                 "Polite decline generation failed",
                 error=str(e)
             )
-            return f"I understand you're asking about: {query}. Based on my capabilities, I can help with: {capabilities}. To assist you better, could you provide more specific details?"
+            return f"I understand you're asking about: {query}. Based on my capabilities, I can help with: {capabilities}. To assist you better, could you provide more specific details?\n\n**Follow-up questions:**\n- What specific values would you like to work with?\n- Could you provide more details about what you're trying to accomplish?\n- Would you like to see examples of what I can help with?"
     
     async def _generate_answer_with_tool_data(self, query: str, tool_result: Dict[str, Any], state: Dict[str, Any]) -> str:
         """

@@ -12,28 +12,35 @@ import json
 
 
 class PlannerAgent:
-    def __init__(self, tool_registry=None):
+    def __init__(self, tool_registry=None, tool_discovery_service=None):
         self.name = "planner"
         self.tool_registry = tool_registry
         self.llm_service = LLMService()
         
-        # Initialize embeddings for RAG-based tools
-        try:
-            self.embeddings = AzureOpenAIEmbeddings(
-                azure_endpoint=settings.azure_embedding_openai_endpoint,
-                api_key=settings.azure_embedding_openai_api_key,
-                api_version=settings.azure_embedding_openai_api_version,
-                deployment=settings.azure_embedding_openai_deployment
-            )
-            logger.info_structured("PlannerAgent embeddings configured")
-        except Exception as e:
-            logger.warning_structured(
-                "Failed to initialize embeddings in PlannerAgent",
-                error=str(e)
-            )
-            self.embeddings = None
+        # Use shared ToolDiscoveryService if provided, otherwise create new one
+        if tool_discovery_service is not None:
+            self.tool_discovery = tool_discovery_service
+            logger.info_structured("PlannerAgent using shared ToolDiscoveryService")
+        else:
+            # Fallback: create own instance (for backward compatibility)
+            try:
+                self.embeddings = AzureOpenAIEmbeddings(
+                    azure_endpoint=settings.azure_embedding_openai_endpoint,
+                    api_key=settings.azure_embedding_openai_api_key,
+                    api_version=settings.azure_embedding_openai_api_version,
+                    deployment=settings.azure_embedding_openai_deployment
+                )
+                logger.info_structured("PlannerAgent embeddings configured")
+            except Exception as e:
+                logger.warning_structured(
+                    "Failed to initialize embeddings in PlannerAgent",
+                    error=str(e)
+                )
+                self.embeddings = None
+            
+            self.tool_discovery = ToolDiscoveryService(embeddings=self.embeddings)
+            logger.warning_structured("PlannerAgent created own ToolDiscoveryService (not using shared instance)")
         
-        self.tool_discovery = ToolDiscoveryService(embeddings=self.embeddings)
         self.context_service = ContextService()
 
     async def create_plan(self, state: ConversationState) -> ConversationState:
@@ -464,20 +471,20 @@ CRITICAL: Respond with ONLY valid JSON, nothing else."""
             required_params = input_schema.get('required', [])
             
             # Create basic parameters
+            # DO NOT use meaningless defaults - only add params with actual values
+            # Leave params out of dict if no value can be inferred - this triggers clarification
             tool_params = {}
             for param in required_params:
                 param_info = input_schema.get('properties', {}).get(param, {})
                 param_type = param_info.get('type', 'string')
                 
+                # Only add parameter to dict if we have a meaningful value
                 if param_type == 'string':
-                    if 'service' in param.lower():
-                        tool_params[param] = 'payment-service' if 'payment' in query_lower else 'default-service'
-                    else:
-                        tool_params[param] = 'default'
-                elif param_type == 'number':
-                    tool_params[param] = 100
-                else:
-                    tool_params[param] = None
+                    if 'service' in param.lower() and 'payment' in query_lower:
+                        tool_params[param] = 'payment-service'
+                    # Otherwise don't add to dict - missing params trigger clarification
+                # For numbers and other types, don't add to dict unless we have actual values
+                # Missing required params will be detected downstream and trigger clarification
             
             step = ExecutionStep(
                 step_number=1,

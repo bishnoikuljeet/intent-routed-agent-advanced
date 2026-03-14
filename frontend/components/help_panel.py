@@ -18,7 +18,7 @@ class HelpPanel:
             
             1. **Create a Session**: Click "🆕 New Session" in the sidebar
             2. **Ask a Question**: Type your query in the input box
-            3. **Use Autocomplete**: Start typing to see suggestions
+            3. **Suggestions Button**: Type at least 2 characters, then click "💡 Suggestions"
             4. **View Results**: See the answer and execution trace
             5. **Manage Sessions**: Switch between sessions or delete old ones
             
@@ -40,10 +40,9 @@ class HelpPanel:
             - Delete old sessions
             
             ### Smart Autocomplete
-            - Get relevant suggestions as you type
+            - Get relevant suggestions when you click the Suggestions button
             - Browse by category (Observability, Knowledge, Utility, etc.)
             - See which tools will be used
-            - Use keyboard to navigate suggestions
             
             ### Execution Traces
             - View detailed execution timeline
@@ -59,17 +58,6 @@ class HelpPanel:
         
         # Example Queries Section
         self._render_example_queries()
-        
-        # Keyboard Shortcuts
-        with st.expander("⌨️ Keyboard Shortcuts"):
-            st.markdown("""
-            | Shortcut | Action |
-            |----------|--------|
-            | `Enter` | Autocomplete suggestions |
-            | `Ctrl+N` | New session (when focused on sidebar) |
-            | `Esc` | Clear input |
-            | `↑` / `↓` | Navigate autocomplete suggestions |
-            """)
         
         # Tool Categories
         with st.expander("🛠️ Available Tools"):
@@ -116,7 +104,7 @@ class HelpPanel:
             ### Common Issues
             
             **Backend Connection Failed**
-            - Check if backend is running on port 8000
+            - Check if backend is running on port 8001
             - Verify `BACKEND_URL` in configuration
             - Check network connectivity
             
@@ -124,11 +112,6 @@ class HelpPanel:
             - Complex queries may take 5-10 seconds
             - Check backend logs for errors
             - Try simplifying the query
-            
-            **Autocomplete Not Working**
-            - Ensure `sample_prompts.md` file exists
-            - Type at least 2 characters
-            - Check console for errors
             
             **Session Not Loading**
             - Verify session ID is valid
@@ -167,7 +150,6 @@ class HelpPanel:
             - Multi-agent workflow orchestration
             - Execution trace visualization
             - Session management
-            - Real-time autocomplete
             
             **Tech Stack:**
             - Frontend: Streamlit

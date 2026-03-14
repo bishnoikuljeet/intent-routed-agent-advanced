@@ -29,6 +29,8 @@ class ToolDiscoveryService:
         self._registered_servers = []
         self._comprehensive_registry_cache = None
         self._server_instances = {}
+        self._tools_cache = None  # Cache discovered tools
+        self._cache_initialized = False
         self.embeddings = embeddings
     
     def _get_comprehensive_registry(self):
@@ -172,31 +174,58 @@ class ToolDiscoveryService:
                 server=server_class.__name__
             )
     
-    async def discover_all_tools(self) -> List[Dict[str, Any]]:
+    async def initialize_tools(self):
+        """
+        Pre-initialize all tools at startup.
+        This should be called once during application startup to populate the cache.
+        """
+        logger.info_structured("Pre-initializing tools at startup")
+        await self.discover_all_tools(force_refresh=True)
+        logger.info_structured(
+            "Tools pre-initialized",
+            total_tools=len(self._tools_cache) if self._tools_cache else 0
+        )
+    
+    async def discover_all_tools(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
         """
         Discover all tools from all registered MCP servers.
+        Uses caching to avoid re-creating server instances on every call.
+        
+        Args:
+            force_refresh: If True, bypass cache and re-discover tools
         
         Returns:
             List of tool dictionaries with schemas
         """
+        # Return cached tools if available and not forcing refresh
+        if self._cache_initialized and self._tools_cache is not None and not force_refresh:
+            logger.debug(
+                f"Returning cached tools (count: {len(self._tools_cache)})"
+            )
+            return self._tools_cache
+        
         tools = []
         
         # Default servers if none registered
         if not self._registered_servers:
             self._registered_servers = [
                 UtilityMCPServer,
-                ObservabilityMCPServer,  # Add missing observability server
+                ObservabilityMCPServer,
                 SystemMCPServer,
                 KnowledgeMCPServer,
-                LanguageMCPServer  # Add language server
+                LanguageMCPServer
             ]
         
         # Discover from each server
         for server_class in self._registered_servers:
             try:
-                server = self._create_server_instance(server_class)
-                # Cache the server instance for execution
-                self._server_instances[server_class.__name__] = server
+                # Reuse cached server instance if available
+                server_class_name = server_class.__name__
+                if server_class_name in self._server_instances and not force_refresh:
+                    server = self._server_instances[server_class_name]
+                else:
+                    server = self._create_server_instance(server_class)
+                    self._server_instances[server_class_name] = server
                 
                 for tool_name, tool in server.tools.items():
                     enhanced_tool = self._enhance_tool_metadata(tool_name, {
@@ -222,9 +251,14 @@ class ToolDiscoveryService:
                     error=str(e)
                 )
         
+        # Cache the discovered tools
+        self._tools_cache = tools
+        self._cache_initialized = True
+        
         logger.info_structured(
             "Total tools discovered",
-            total_count=len(tools)
+            total_count=len(tools),
+            cached=not force_refresh
         )
         
         return tools

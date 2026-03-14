@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -39,11 +39,13 @@ class SessionService:
     def create_session(self, session_id: str, metadata: Optional[Dict] = None) -> Dict[str, Any]:
         """Create a new session"""
         sessions = self._load_sessions()
+
+        now_utc = datetime.now(timezone.utc).isoformat()
         
         session = {
             "id": session_id,
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
+            "created_at": now_utc,
+            "updated_at": now_utc,
             "messages": [],
             "metadata": metadata or {}
         }
@@ -74,7 +76,7 @@ class SessionService:
         
         if session_id in sessions:
             sessions[session_id].update(updates)
-            sessions[session_id]['updated_at'] = datetime.utcnow().isoformat()
+            sessions[session_id]['updated_at'] = datetime.now(timezone.utc).isoformat()
             self._save_sessions(sessions)
     
     def add_message(self, session_id: str, role: str, content: str, metadata: Optional[Dict] = None):
@@ -85,12 +87,12 @@ class SessionService:
             message = {
                 "role": role,
                 "content": content,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "metadata": metadata or {}
             }
             
             sessions[session_id]['messages'].append(message)
-            sessions[session_id]['updated_at'] = datetime.utcnow().isoformat()
+            sessions[session_id]['updated_at'] = datetime.now(timezone.utc).isoformat()
             self._save_sessions(sessions)
     
     def delete_session(self, session_id: str) -> bool:

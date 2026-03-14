@@ -1,6 +1,6 @@
 import streamlit as st
 from typing import Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -92,7 +92,10 @@ class SessionManager:
         # Format timestamps
         try:
             created_dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
-            created_str = created_dt.strftime("%Y-%m-%d %H:%M")
+            if created_dt.tzinfo is None:
+                created_dt = created_dt.replace(tzinfo=timezone.utc)
+            created_local = created_dt.astimezone()
+            created_str = created_local.strftime("%Y-%m-%d %H:%M")
         except:
             created_str = created_at[:16] if created_at else "Unknown"
         

@@ -216,8 +216,13 @@ Enhanced Query:
             # Check if original query has any context indicators
             has_indicator = any(indicator in original_query.lower() for indicator in context_indicators)
             
-            if not has_indicator:
-                # No clear indicator - enhancement is suspicious
+            # ALSO check if this looks like a follow-up answer to a question
+            # E.g., "2 and 3" following "What values would you like to compare?"
+            is_short_answer = len(original_query.split()) <= 5  # Short queries are often answers
+            has_question_in_context = "?" in context  # Previous message asked a question
+            
+            if not has_indicator and not (is_short_answer and has_question_in_context):
+                # No clear indicator AND not a short answer to a question - enhancement is suspicious
                 return False
             
             # Check if enhancement adds specific content from context

@@ -215,14 +215,25 @@ Guidelines:
 - If confidence is low, acknowledge uncertainty
 - Provide actionable information when applicable
 
-IMPORTANT: If the user's query appears to be testing or validating a feature (contains words like "test", "fix", "validate", "check"), you MUST add ALL of these follow-up questions at the end:
-1. "Did this work as expected?"
-2. "Would you like to test other cases?"
-3. "Should we try different scenarios?"
+IMPORTANT - FOLLOW-UP QUESTIONS:
+After providing your answer, ALWAYS generate 2-3 relevant follow-up questions that:
+1. Help the user explore related aspects of their query
+2. Suggest natural next steps or variations
+3. Are specific to the context and data analyzed
+4. Encourage deeper engagement with the system's capabilities
 
-Do not skip any of these questions for test/fix validation queries.
+Format follow-up questions as:
+**Follow-up questions:**
+- [Question 1]
+- [Question 2]
+- [Question 3]
 
-Generate a natural language answer that directly addresses the user's query."""
+Examples based on query type:
+- Comparison queries: "Would you like to compare other values?", "Should we analyze the percentage difference?", "Do you want to see a different comparison type?"
+- Data queries: "Would you like to see more details?", "Should we filter by specific criteria?", "Do you want to analyze a different time period?"
+- Calculation queries: "Would you like to try different values?", "Should we explore other calculations?", "Do you want to see related metrics?"
+
+Generate a natural language answer that directly addresses the user's query, followed by relevant follow-up questions."""
         
         context = {
             "reasoning": reasoning_output,
@@ -579,10 +590,19 @@ IMPORTANT RULES:
 - Use examples that are natural and user-friendly
 - Transform technical tool names into user-friendly descriptions
 
-6. Is conversational and helpful
-7. NEVER uses generic examples - use the specific, highly relevant tools discovered
+FOLLOW-UP QUESTIONS:
+After your clarification response, ALWAYS add 2-3 helpful follow-up questions that:
+- Guide the user to provide the missing information
+- Suggest specific examples based on available capabilities
+- Help the user understand what they can ask for
 
-Keep the response concise but comprehensive. Do not use markdown formatting.""")
+Format follow-up questions as:
+**Follow-up questions:**
+- [Specific question related to missing info 1]
+- [Specific question related to missing info 2]
+- [Example question showing what they can ask]
+
+Keep the response concise but comprehensive. Do not use markdown formatting except for the follow-up questions section.""")
 
         try:
             clarification_prompt = "\n".join(prompt_parts)

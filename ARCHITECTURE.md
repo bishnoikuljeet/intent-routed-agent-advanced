@@ -126,10 +126,10 @@ Each agent has a single, well-defined responsibility:
                               │
 ┌─────────────────────────────────────────────────────────────┐
 │                      Service Layer                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  ┌──────────────────┐ │
-│  │   Memory    │  │   Language  │  │  Tool Discovery │  │  Context Service │ │
-│  │   Manager   │  │  Processor  │  │     Service     │  │                  │ │
-│  └─────────────┘  └─────────────┘  └─────────────────┘  └──────────────────┘ │
+│ ┌──────────┐ ┌───────────┐ ┌────────────────┐ ┌───────────┐ │
+│ │  Memory  │ │ Language  │ │ Tool Discovery │ │ Context   │ │
+│ │  Manager │ │ Processor │ │    Service     │ │ Service   │ │
+│ └──────────┘ └───────────┘ └────────────────┘ └───────────┘ │
 └─────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────┐
@@ -151,6 +151,10 @@ Each agent has a single, well-defined responsibility:
 │    └─────────────┘  └─────────────┘  └─────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+### Streamlit UI Interaction Notes
+
+- Tool suggestions are presented when the user clicks the Suggestions button (not on every keystroke).
 
 ---
 
@@ -204,6 +208,7 @@ Each agent has a single, well-defined responsibility:
 │  • Generate step-by-step execution plan                     │
 │  • Identify parallel execution opportunities                │
 │  • Estimate execution duration                              │
+│  • Uses ToolDiscoveryService cache for enhanced tool matching│
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -256,10 +261,10 @@ Each agent has a single, well-defined responsibility:
             └───────────────┘  └──────────────┘
                                       ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                Tool-First Answer Agent                       │
-│  • Tool-first approach (always requires tool execution)      │
+│                Tool-First Answer Agent                      │
+│  • Tool-first approach (always requires tool execution)     │
 │  • Uses ToolDiscoveryService for dynamic tool selection     │
-│  • RAG-based tool discovery with embeddings                  │
+│  • RAG-based tool discovery with embeddings                 │
 │  • Polite decline with capabilities if no tools available   │
 │  • ContextService for enhanced context management           │
 └─────────────────────────────────────────────────────────────┘
@@ -587,25 +592,25 @@ MCP is a standardized protocol for exposing tools, resources, and prompts to AI 
 ### MCP Server Architecture
 
 ```
-                             ┌──────────────────────────────────────────┐
-                             │          MCP Server Base                 │
-                             │           • Tool registration            │
-                             │           • Resource management          │
-                             │           • Prompt templates             │
-                             │           • Error handling               │
-                             └──────────────────────────────────────────┘
-                                                   ↑
-        ┌─────────────────────┬────────────────────┼──────────────────┬───────────────────┐
-        │                     │                    │                  │                   │
-┌───────────────┐  ┌──────────────────┐  ┌─────────────────┐  ┌───────────────┐  ┌──────────────────┐
-│ Observability │  │    Knowledge     │  │    Language     │  │    Utility    │  │     System       │
-│    Server     │  │      Server      │  │     Server      │  │    Server     │  │     Server       │
-│               │  │                  │  │                 │  │               │  │                  │
-│ • Metrics     │  │ • Semantic       │  │ • Translation   │  │ • Compare     │  │ • Registry       │
-│ • Latency     │  │   Search         │  │ • Detection     │  │ • Calculate   │  │ • Health         │
-│ • Errors      │  │ • Documents      │  │ • Normalization │  │ • Statistics  │  │ • Workflow       │
-│ • Status      │  │ • Policies       │  │                 │  │               │  │                  │
-└───────────────┘  └──────────────────┘  └─────────────────┘  └───────────────┘  └──────────────────┘
+                             ┌─────────────────────────────────────────┐
+                             │          MCP Server Base                │
+                             │           • Tool registration           │
+                             │           • Resource management         │
+                             │           • Prompt templates            │
+                             │           • Error handling              │
+                             └─────────────────────────────────────────┘
+                                                 ↑
+        ┌───────────────────┬────────────────────┼──────────────────┬───────────────────┐
+        │                   │                    │                  │                   │
+┌───────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌───────────────┐  ┌────────────────┐
+│ Observability │  │    Knowledge    │  │    Language     │  │    Utility    │  │     System     │
+│    Server     │  │      Server     │  │     Server      │  │    Server     │  │     Server     │
+│               │  │                 │  │                 │  │               │  │                │
+│ • Metrics     │  │ • Semantic      │  │ • Translation   │  │ • Compare     │  │ • Registry     │
+│ • Latency     │  │   Search        │  │ • Detection     │  │ • Calculate   │  │ • Health       │
+│ • Errors      │  │ • Documents     │  │ • Normalization │  │ • Statistics  │  │ • Workflow     │
+│ • Status      │  │ • Policies      │  │                 │  │               │  │                │
+└───────────────┘  └─────────────────┘  └─────────────────┘  └───────────────┘  └────────────────┘
 ```
 
 ### Available MCP Servers
@@ -692,22 +697,22 @@ MCP is a standardized protocol for exposing tools, resources, and prompts to AI 
 ### Tool Discovery Service
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                 Tool Discovery Service                      │
+┌────────────────────────────────────────────────────────────┐
+│                 Tool Discovery Service                     │
 │  File: app/services/tool_discovery_service.py              │
-└─────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────┘
                               │
         ┌─────────────────────┼─────────────────────┐
         │                     │                     │
-┌───────────────┐  ┌──────────────────┐  ┌─────────────────┐
-│   Static      │  │   Dynamic        │  │   RAG-Based     │
-│   Registry    │  │   Discovery      │  │   Discovery     │
-│               │  │                  │  │                 │
-│ • ALL_TOOLS_  │  • Runtime server  │  • Semantic      │
-│   REGISTRY    │  • registration    │  • search        │
-│ • Pre-defined │  • Live updates    │  • Embeddings    │
-│ • Metadata    │  • Health checks   │  • Tool vectors  │
-└───────────────┘  └──────────────────┘  └─────────────────┘
+┌────────────────┐  ┌───────────────────┐  ┌─────────────────┐
+│   Static       │  │   Dynamic         │  │   RAG-Based     │
+│   Registry     │  │   Discovery       │  │   Discovery     │
+│                │  │                   │  │                 │
+│ • ALL_TOOLS_   │  │  • Runtime server │  │  • Semantic     │
+│   REGISTRY     │  │  • registration   │  │  • search       │
+│ • Pre-defined  │  │  • Live updates   │  │  • Embeddings   │
+│ • Metadata     │  │  • Health checks  │  │  • Tool vectors │
+└────────────────┘  └───────────────────┘  └─────────────────┘
 ```
 
 **Key Features**:
@@ -716,25 +721,26 @@ MCP is a standardized protocol for exposing tools, resources, and prompts to AI 
 - **RAG-Based Discovery**: Semantic search using embeddings and vector stores
 - **Tool Vectors**: Embeddings for semantic tool matching
 - **Comprehensive Cache**: Enhanced metadata with capabilities and examples
+- **Startup Initialization**: `AgentOrchestrator.initialize()` pre-loads and caches tool metadata for fast lookup
 
 ### Context Service
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                   Context Service                           │
-│  File: app/services/context_service.py                     │
-└─────────────────────────────────────────────────────────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-┌───────────────┐  ┌──────────────────┐  ┌─────────────────┐
-│  Conversation │  │   Tool           │  │   System        │
-│  Context      │  │   Context       │  │   Context       │
-│               │  │                  │  │                 │
-│ • Chat history│  • Tool results    │  • Agent states   │
-│ • User prefs  │  • Execution trace │  • System health  │
-│ • Session data│  • Cache status    │  • Metrics        │
-└───────────────┘  └──────────────────┘  └─────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                     Context Service                          │
+│            File: app/services/context_service.py             │
+└──────────────────────────────────────────────────────────────┘
+                               │
+         ┌─────────────────────┼─────────────────────┐
+         │                     │                     │
+┌─────────────────┐  ┌───────────────────┐  ┌──────────────────┐
+│   Conversation  │  │        Tool       │  │      System      │
+│     Context     │  │      Context      │  │     Context      │
+│                 │  │                   │  │                  │
+│ • Chat history  │  | • Tool results    │  | • Agent states   │
+│ • User prefs    │  | • Execution trace │  | • System health  │
+│ • Session data  │  | • Cache status    │  | • Metrics        │
+└─────────────────┘  └───────────────────┘  └──────────────────┘
 ```
 
 ---
@@ -744,21 +750,21 @@ MCP is a standardized protocol for exposing tools, resources, and prompts to AI 
 ### Memory Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Memory Manager                           │
-│  File: app/memory/manager.py                                │
-└─────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│                    Memory Manager                         │
+│              File: app/memory/manager.py                  │
+└───────────────────────────────────────────────────────────┘
                               │
         ┌─────────────────────┼─────────────────────┐
         ↓                     ↓                     ↓
-┌───────────────┐  ┌──────────────────┐  ┌─────────────────┐
-│    Recent     │  │   Conversation   │  │    Semantic     │
-│   Messages    │  │     Summary      │  │    Retrieval    │
-│               │  │                  │  │                 │
-│ • Last N msgs │  │ • LLM-generated  │  │ • Vector search │
-│ • Full text   │  │ • Older messages │  │ • Top-k similar │
-│ • Metadata    │  │ • Compressed     │  │ • Context inject│
-└───────────────┘  └──────────────────┘  └─────────────────┘
+┌────────────────┐  ┌──────────────────┐  ┌─────────────────┐
+│    Recent      │  │   Conversation   │  │    Semantic     │
+│   Messages     │  │     Summary      │  │    Retrieval    │
+│                │  │                  │  │                 │
+│ • Last N msgs  │  │ • LLM-generated  │  │ • Vector search │
+│ • Full text    │  │ • Older messages │  │ • Top-k similar │
+│ • Metadata     │  │ • Compressed     │  │ • Context inject│
+└────────────────┘  └──────────────────┘  └─────────────────┘
 ```
 
 ### Memory Workflow
@@ -769,7 +775,7 @@ MCP is a standardized protocol for exposing tools, resources, and prompts to AI 
 conversation_history.append({
     "role": "user",
     "content": query,
-    "timestamp": datetime.now(),
+    "timestamp": datetime.now(timezone.utc).isoformat(),
     "metadata": {...}
 })
 ```

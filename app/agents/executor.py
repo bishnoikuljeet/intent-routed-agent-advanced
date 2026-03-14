@@ -88,35 +88,48 @@ class ExecutorAgent:
                     missing_params.append(param_name)
             
             if missing_params:
+                # Check if this is a comparison/calculation tool - these should NEVER have defaults
+                comparison_tools = ['compare_values', 'percentage_difference', 'statistics_summary', 'trend_analysis']
+                
+                if tool_name in comparison_tools:
+                    # DO NOT apply defaults for comparison/calculation tools
+                    logger.error_structured(
+                        "Missing required parameters for comparison tool - cannot execute",
+                        tool=tool_name,
+                        server=server_name,
+                        missing_params=missing_params,
+                        provided_params=list(params.keys())
+                    )
+                    
+                    # Return error to trigger clarification
+                    return {
+                        "success": False,
+                        "error": f"Missing required parameters: {', '.join(missing_params)}",
+                        "tool_results": [],
+                        "tools_executed": 0
+                    }
+                
                 logger.warning_structured(
-                    "Missing required parameters, applying smart defaults",
+                    "Missing required parameters, applying smart defaults for non-comparison tools",
                     tool=tool_name,
                     server=server_name,
                     missing_params=missing_params,
                     provided_params=list(params.keys())
                 )
                 
-                # Apply smart defaults based on parameter metadata
+                # Apply smart defaults ONLY for non-comparison tools
                 query = state.get('current_query', '') if state else ''
                 query_lower = query.lower()
                 
                 for param_name in missing_params:
-                    # Only add parameters that are actually defined in the schema
                     if param_name not in properties:
-                        logger.warning_structured(
-                            "Skipping undefined parameter",
-                            tool=tool_name,
-                            server=server_name,
-                            param_name=param_name
-                        )
                         continue
                     
-                    # Get parameter info from properties dict
                     param_info = properties.get(param_name, {})
                     param_type = param_info.get('type', 'string')
                     param_desc = param_info.get('description', '').lower()
                     
-                    # Smart defaults based on parameter semantics
+                    # Smart defaults ONLY for specific cases
                     if param_type == 'string':
                         if 'metric' in param_name.lower() or 'metric' in param_desc:
                             if 'latency' in query_lower:
@@ -125,30 +138,21 @@ class ExecutorAgent:
                                 enhanced_params[param_name] = 'error_rate'
                             elif 'throughput' in query_lower or 'traffic' in query_lower:
                                 enhanced_params[param_name] = 'throughput'
-                            else:
-                                enhanced_params[param_name] = 'latency'  # Default metric
                         elif 'time' in param_name.lower() or 'period' in param_desc:
-                            enhanced_params[param_name] = '1h'  # Default time period
+                            enhanced_params[param_name] = '1h'
                         elif 'format' in param_name.lower():
                             enhanced_params[param_name] = 'json'
-                        else:
-                            enhanced_params[param_name] = 'default'
                     elif param_type == 'number' or param_type == 'integer':
                         if 'limit' in param_name.lower():
                             enhanced_params[param_name] = 100
                         elif 'threshold' in param_desc:
                             enhanced_params[param_name] = 0.95
-                        else:
-                            enhanced_params[param_name] = 0
                     elif param_type == 'boolean':
-                        enhanced_params[param_name] = True
-                    elif param_type == 'array':
-                        enhanced_params[param_name] = []
-                    else:
-                        enhanced_params[param_name] = None
+                        if 'enable' in param_name.lower() or 'active' in param_name.lower():
+                            enhanced_params[param_name] = True
                 
                 logger.info_structured(
-                    "Applied smart defaults to parameters",
+                    "Applied smart defaults to non-comparison tool parameters",
                     tool=tool_name,
                     server=server_name,
                     original_params=list(params.keys()),

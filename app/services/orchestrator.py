@@ -19,6 +19,7 @@ from app.mcp.utility_server import UtilityMCPServer
 from app.mcp.system_server import SystemMCPServer
 from app.registry.tool_registry import ToolRegistry
 from app.rag.retriever import RAGRetriever
+from app.services.tool_discovery_service import ToolDiscoveryService
 from app.schemas.models import ToolMetadata, QueryRequest, QueryResponse
 from app.core.config import settings
 from app.core.logging import logger
@@ -34,6 +35,7 @@ class AgentOrchestrator:
         self.memory_manager = None
         self.language_processor = None
         self.tool_registry = None
+        self.tool_discovery_service = None
         self.mcp_servers = {}
         self.workflow = None
         
@@ -96,6 +98,12 @@ class AgentOrchestrator:
         self._initialize_mcp_servers()
         
         self._register_tools()
+        
+        # Initialize tool discovery service with embeddings and pre-load all tools
+        logger.info_structured("Initializing tool discovery service")
+        self.tool_discovery_service = ToolDiscoveryService(embeddings=self.embeddings)
+        await self.tool_discovery_service.initialize_tools()
+        logger.info_structured("Tool discovery service initialized and tools cached")
         
         # Initialize tool vector store for semantic tool search
         await self._initialize_tool_vector_store()
@@ -172,7 +180,7 @@ class AgentOrchestrator:
         coordinator = CoordinatorAgent()
         # Use the same intent agent that was used for language processor
         intent = IntentAgent()  
-        planner = PlannerAgent(self.tool_registry)
+        planner = PlannerAgent(self.tool_registry, self.tool_discovery_service)
         executor = ExecutorAgent(self.mcp_servers)
         aggregator = AggregatorAgent()
         reasoning = ReasoningAgent()

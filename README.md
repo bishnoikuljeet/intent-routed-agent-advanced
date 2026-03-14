@@ -71,6 +71,7 @@ Translation Layer (multilingual output)
 - Generates execution plans dynamically
 - Identifies parallel execution opportunities
 - Adapts to available tools
+- Leverages cached metadata from the ToolDiscoveryService for faster selection
 
 **Executor Agent**
 - Executes tools via MCP protocol
@@ -141,6 +142,7 @@ The memory system maintains conversation context with:
 1. **Recent Messages**: Last N messages kept in full
 2. **Conversation Summary**: Older messages summarized by LLM
 3. **Semantic Retrieval**: Vector search over historical messages
+4. **UTC Timestamps**: Messages stored with UTC ISO timestamps, rendered in local time in the UI
 
 ### Memory Summarization
 
@@ -813,7 +815,7 @@ API_PORT=8001
 ✅ **LangSmith observability**  
 ✅ **Structured JSON logging**  
 ✅ **Production-ready FastAPI** backend  
-✅ **Streamlit UI** with real-time updates  
+✅ **Streamlit UI** with on-demand Suggestions button (no noisy auto-complete)  
 ✅ **Interactive CLI**  
 ✅ **Tool-agnostic & data-agnostic** design  
 

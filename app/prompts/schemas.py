@@ -193,11 +193,11 @@ class LLMSchemas:
             'context_inference': '''{
     "can_handle": true,
     "selected_tool": "compare_values",
-    "parameters": {"value1": 10, "value2": 20},
+    "parameters": {"value1": null, "value2": null},
     "confidence": 0.9,
-    "reasoning": "Query asks to compare two numbers",
-    "needs_clarification": false,
-    "clarification_question": ""
+    "reasoning": "Query asks to compare two numbers but values not provided",
+    "needs_clarification": true,
+    "clarification_question": "What are the two values you'd like to compare?"
 }''',
             'execution_plan': '''{
     "reasoning": "Need to get metric then calculate difference",
@@ -227,10 +227,10 @@ class LLMSchemas:
     "reasoning": "Tool description matches query intent"
 }''',
             'parameter_extraction': '''{
-    "extracted_params": {"value1": 100, "value2": 150},
+    "extracted_params": {"service_name": "payment-service", "metric": "latency"},
     "confidence": 0.95,
     "missing_required": [],
-    "reasoning": "Both values clearly stated in query"
+    "reasoning": "Service name and metric clearly stated in query"
 }'''
         }
         

@@ -90,67 +90,80 @@ class ChatInterface:
             st.session_state.last_query_length = 0
         
         st.markdown("### 🔍 Ask a Question")
+
+        if 'query_input' not in st.session_state:
+            st.session_state.query_input = ''
+        if 'query_input_value' not in st.session_state:
+            st.session_state.query_input_value = ''
+        if 'pending_query_input' in st.session_state:
+            st.session_state.query_input = st.session_state.pending_query_input
+            del st.session_state.pending_query_input
+
+        st.text_input(
+            "Your Query",
+            key="query_input",
+            placeholder="Type your question here...",
+            label_visibility="collapsed"
+        )
+
+        query = st.session_state.get('query_input', '')
+        st.session_state.query_input_value = query
+        st.session_state.current_query = query
+
+        current_query_value = query
         
-        col1, col2 = st.columns([5, 1])
+        # Send and Suggestions buttons in same row
+        col_send, col_suggestions = st.columns([1, 1])
+        with col_send:
+            send_clicked = st.button("🚀 Send", use_container_width=True, type="primary", help="Send query")
+        with col_suggestions:
+            suggestions_clicked = st.button("💡 Suggestions", use_container_width=True, help="Show query suggestions")
         
-        with col1:
-            # Add clear instructions for user
-            st.markdown("""
-            <style>
-            .autocomplete-hint {
-                font-size: 0.8rem;
-                color: #666;
-                margin-bottom: 0.5rem;
-            }
-            </style>
-            <div class="autocomplete-hint">💡 Type 2+ characters to see suggestions automatically</div>
-            """, unsafe_allow_html=True)
-            
-            # Use text_input without key to avoid session state conflicts
-            query = st.text_input(
-                "Your Query",
-                value=st.session_state.current_query,
-                placeholder="Type your question here and press Enter...",
-                label_visibility="collapsed"
-            )
-            
-            # Detect changes and update state
-            if query != st.session_state.current_query:
-                st.session_state.current_query = query
-                st.session_state.show_suggestions = len(query) >= 2
+        # Handle Suggestions button click - toggle suggestions display
+        if suggestions_clicked:
+            if current_query_value.strip():
+                # Toggle suggestions on
+                st.session_state.show_suggestions = True
+                logger.info(f"Suggestions button clicked. Query: '{current_query_value}'")
                 st.rerun()
-            
-            # Show typing indicator
-            if len(query) > 0 and len(query) < 2:
-                st.caption("🔍 Type 2+ characters and press Enter for suggestions...")
+            else:
+                st.warning("⚠️ Please enter a query to get suggestions.")
         
-        with col2:
-            send_button = st.button("🚀 Send", use_container_width=True, type="primary")
+        # Handle Send button click - process query directly
+        if send_clicked:
+            query_to_process = current_query_value
+            logger.info(f"Send button clicked. Query: '{query_to_process}'")
+            
+            if query_to_process.strip():
+                # Hide suggestions and process query
+                st.session_state.show_suggestions = False
+                logger.info(f"Processing query: '{query_to_process}' for session: {session_id}")
+                self._process_query(query_to_process, session_id)
+                # Clear all query states after processing
+                st.session_state.current_query = ""
+                st.session_state.query_input_value = ""
+                st.session_state.pending_query_input = ""
+                st.rerun()
+            else:
+                # Empty query - hide suggestions
+                logger.warning("Send button clicked but query is empty")
+                st.session_state.show_suggestions = False
+                st.warning("⚠️ Please enter a query before sending.")
         
         # Show autocomplete suggestions (Google-style dropdown)
+        # Only show if send button was NOT clicked
         if st.session_state.get('show_suggestions', False) and len(st.session_state.get('current_query', '')) >= 2:
             self._render_autocomplete_suggestions()
-        
-        # Action buttons
-        col_clear, col_help = st.columns(2)
-        with col_clear:
-            if st.button("🗑️ Clear Chat", use_container_width=True):
-                st.session_state.messages = []
-                st.session_state.current_query = ""
-                st.rerun()
-        
-        # Process query on send button
-        if send_button and query.strip():
-            # Hide suggestions when processing
-            st.session_state.show_suggestions = False
-            self._process_query(query, session_id)
     
     def _render_autocomplete_suggestions(self):
         """Render Google-style autocomplete suggestions"""
+        query = st.session_state.current_query
         suggestions = self.autocomplete_service.get_suggestions(
-            st.session_state.current_query,
+            query,
             max_results=5
         )
+
+        logger.info(f"Autocomplete suggestions requested for query='{query}' -> {len(suggestions)} results")
         
         if suggestions:
             # Google-style suggestion box
@@ -196,13 +209,17 @@ class ChatInterface:
                 
                 with col2:
                     if st.button("Use", key=f"use_suggestion_{i}", use_container_width=True):
-                        # Update the tracked query
+                        # Update text input value to populate the input field
                         st.session_state.current_query = suggestion['text']
+                        st.session_state.query_input_value = suggestion['text']
+                        st.session_state.pending_query_input = suggestion['text']
                         st.session_state.show_suggestions = False
                         st.rerun()
             
             st.markdown("---")
             st.caption("💡 **Tip:** Select a suggestion or type your own query and press Enter")
+        else:
+            st.info("No suggestions found. Try a different query.")
     
     def _process_query(self, query: str, session_id: Optional[str]):
         """Process user query"""
@@ -285,6 +302,5 @@ class ChatInterface:
                 st.session_state.messages.append(error_message)
                 
                 st.error(f"Failed to process query: {str(e)}")
-        
-        # Rerun to update UI
-        st.rerun()
+
+        return

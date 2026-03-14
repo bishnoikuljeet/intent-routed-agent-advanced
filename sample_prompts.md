@@ -278,11 +278,11 @@
 
 ### translate_text
 - "Translate 'Hello world' to Spanish"
-    - Should use: semantic_search
-    - Expected intent: general_query (auto-corrected)
+    - Should use: translate_text
+    - Expected: Spanish translation of 'Hello world'
 - "Convert this error message to French"
-    - Should use: semantic_search
-    - Expected intent: general_query (auto-corrected)
+    - Should use: translate_text
+    - Expected: French translation of error message
 - "Translate 'Bonjour le monde' from French to English"
-    - Should use: semantic_search
-    - Expected intent: general_query (auto-corrected)
+    - Should use: translate_text
+    - Expected: English translation of French phrase

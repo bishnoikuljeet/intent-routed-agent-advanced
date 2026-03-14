@@ -98,8 +98,12 @@ PARAMETER EXTRACTION STRATEGY:
    - Time ranges → Infer from temporal expressions, map to schema's time parameter name
    - Numeric values → Extract numbers, map to schema's numeric parameter names
    - Language names → Convert to lowercase (e.g., "French" → "french", "English" → "english")
-6. NEVER leave required parameters empty - always provide a value, even if inferred
-7. NEVER use generic parameter names - always use the exact names from the tool's input schema
+6. CRITICAL: For comparison/calculation tools (compare_values, percentage_difference, statistics_summary, trend_analysis):
+   - If parameter values are NOT explicitly stated in the query, set them to null
+   - DO NOT infer or guess numeric values for comparisons - this leads to meaningless results
+   - Example: Query "compare" without values → set value1: null, value2: null
+7. For other tools, you may infer reasonable parameter values from context when appropriate
+8. NEVER use generic parameter names - always use the exact names from the tool's input schema
 
 Examples (Pattern-Based):
 

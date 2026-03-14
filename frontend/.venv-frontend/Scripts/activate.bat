@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\KB\intent_routed_agent_advanced\frontend\.venv-frontend
+set VIRTUAL_ENV=C:\KB\demo\2\intent-routed-agent-advanced-main\frontend\.venv-frontend
 
 if not defined PROMPT set PROMPT=$P$G
 

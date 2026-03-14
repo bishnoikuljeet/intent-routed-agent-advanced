@@ -142,7 +142,7 @@ def main():
     st.divider()
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.caption("💡 Tip: Use autocomplete for quick queries")
+        st.caption("💡 Click Suggestions to see query options")
     with col2:
         st.caption("📊 View execution traces for insights")
     with col3:
