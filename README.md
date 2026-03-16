@@ -2,12 +2,19 @@
 
 Production-grade multi-agent AI platform with LLM-driven tool selection, multilingual support, conversation memory, and adaptive workflow orchestration.
 
-## 📺 Demo Video
+## 📺 Demo Videos
 
-### 🎥 Watch the Demo
-- **[📹 Play Demo Video](https://drive.google.com/file/d/16IgYvd7EuEy5TeIDfxMcpfhighDZmhJI/preview)** (Google Drive)
+### 🎥 Watch the Demos
 
-**📹 Demo Video Location**: `assets/demos/demo.mp4`
+**🌟 Basic Demo** - Core Platform Features
+- **[📹 Play Basic Demo](https://drive.google.com/file/d/16IgYvd7EuEy5TeIDfxMcpfhighDZmhJI/preview)** (Google Drive)
+- **Location**: `assets/demos/basic_demo.mp4`
+- **Shows**: Multi-agent workflow, tool selection, language processing, memory management
+
+**� Advanced Demo** - Database & Caching Features *(Coming Soon)*
+- **Location**: `assets/demos/database_cache_demo.mp4` *(Add your video here)*
+- **Shows**: Database operations, multi-step queries, advanced caching, security features
+- **Highlights**: 99.995% performance improvement with caching, real-time query responses
 
 ---
 
@@ -910,34 +917,7 @@ API_PORT=8001
 ✅ **Enhanced parameter handling** with null value support  
 ✅ **Complete database system** with schema-aware SQL generation  
 
-## � Demo Videos
-
-### 📹 Available Demonstrations
-
-**🌟 Basic Demo** - `assets/demos/basic_demo.mp4`
-- Multi-agent workflow execution
-- Tool selection and orchestration
-- Language processing capabilities
-- Memory management and context
-
-**🚀 Advanced Demo** - `assets/demos/database_cache_demo.mp4` *(New!)*
-- **Database Operations**: Customer searches, order lookups, inventory queries
-- **Multi-step Queries**: Complex workflows with parameter passing
-- **Advanced Caching**: 99.995% performance improvement with query-level caching
-- **Security Features**: Malicious intent detection and safe query handling
-- **Real-time Performance**: See cached queries respond in ~0.001 seconds
-
-### 🎯 Key Highlights in Advanced Demo
-
-- **Database System**: Schema-aware SQL generation with RAG enhancement
-- **Caching Performance**: Instant responses for repeated queries
-- **Multi-step Workflows**: "Show me orders for customer Acme Corporation"
-- **Security**: Automatic blocking of malicious database operations
-- **Parameter Handling**: Smart default value application
-
-*See `assets/demos/README.md` for detailed video descriptions*
-
-## �🎨 LangGraph Studio Integration
+## � LangGraph Studio Integration
 
 Visualize and debug the workflow:
 
