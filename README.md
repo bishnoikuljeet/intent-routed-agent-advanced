@@ -12,9 +12,9 @@ Production-grade multi-agent AI platform with LLM-driven tool selection, multili
 - **Shows**: Multi-agent workflow, tool selection, language processing, memory management
 
 **🚀 Advanced Demo** - Database & Caching Features
-- **[📹 Play Advanced Demo](https://drive.google.com/file/d/1KaSuXvWZHSwiGi5H9tbads_YuQin7LfJ/view?usp=sharing)** (Google Drive)
+- **[📹 Play Advanced Demo](https://drive.google.com/file/d/1KaSuXvWZHSwiGi5H9tbads_YuQin7LfJ/preview)** (Google Drive)
 - **Location**: `assets/demos/database_cache_demo.mp4`
-- **Shows**: Database operations, multi-step queries, advanced caching, security features
+- **Shows**: Database operations and advanced caching capabilities
 - **Highlights**: 99.995% performance improvement with caching, real-time query responses
 
 ---
