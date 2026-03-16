@@ -96,6 +96,15 @@ class HelpPanel:
             - Text translation
             - Typo correction
             - Text normalization
+            
+            ### Database Server
+            - **get_order_details**: Retrieve complete order information by order number
+            - **search_customers**: Search customers by name, territory, or type
+            - **get_sales_summary**: Get sales totals and metrics for date ranges
+            - **get_customer_orders**: Retrieve all orders for a specific customer
+            - **get_low_stock_items**: Find inventory items below reorder threshold
+            - **search_inventory**: Search products by SKU, name, or category
+            - **query_database**: Execute dynamic SQL queries with natural language (schema-aware)
             """)
         
         # Troubleshooting

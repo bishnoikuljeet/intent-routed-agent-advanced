@@ -255,8 +255,16 @@ class RAGRetriever:
             success_count = 0
             total_files = 0
             
-            # Load all markdown and text files from directory
-            for doc_file in list(docs_path.glob("*.md")) + list(docs_path.glob("*.txt")):
+            # Load all markdown, text, and SQL files from directory
+            doc_files = list(docs_path.glob("*.md")) + list(docs_path.glob("*.txt")) + list(docs_path.glob("*.sql"))
+            
+            # Also load SQL files from database init scripts directory
+            db_init_path = Path("databases/init-scripts")
+            if db_init_path.exists():
+                for sql_file in db_init_path.rglob("01-init.sql"):  # Only load schema files, not data files
+                    doc_files.append(sql_file)
+            
+            for doc_file in doc_files:
                 total_files += 1
                 try:
                     with open(doc_file, 'r', encoding='utf-8') as f:
@@ -279,6 +287,14 @@ class RAGRetriever:
                     elif "langgraph" in filename.lower():
                         doc_type = "framework"
                         category = "technology"
+                    elif doc_file.suffix == ".sql":
+                        doc_type = "database_schema"
+                        category = "database"
+                        # Determine which database from path
+                        if "sales" in str(doc_file).lower():
+                            category = "database_sales"
+                        elif "inventory" in str(doc_file).lower():
+                            category = "database_inventory"
                     
                     document = {
                         "id": filename,

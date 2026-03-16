@@ -9,6 +9,7 @@ from app.mcp.system_server import SystemMCPServer
 from app.mcp.knowledge_server import KnowledgeMCPServer
 from app.mcp.observability_server import ObservabilityMCPServer
 from app.mcp.language_server import LanguageMCPServer
+from app.mcp.database_server import DatabaseMCPServer
 from app.registry.tool_registry import ToolRegistry
 from app.core.logging import logger
 
@@ -118,6 +119,14 @@ class ToolDiscoveryService:
             # Handle servers with required dependencies
             if server_class == SystemMCPServer:
                 return server_class(self.tool_registry)
+            elif server_class == DatabaseMCPServer:
+                # DatabaseMCPServer needs LLM service and RAG retriever for query_database tool
+                from app.services.llm_service import LLMService
+                from app.rag.retriever import RAGRetriever
+                llm_service = LLMService()
+                # Create RAG retriever with embeddings if available
+                rag_retriever = RAGRetriever(embeddings=self.embeddings) if self.embeddings else None
+                return server_class(llm_service=llm_service, rag_retriever=rag_retriever)
             elif server_class == KnowledgeMCPServer:
                 # Create RAG retriever with embeddings if available
                 from app.rag.retriever import RAGRetriever

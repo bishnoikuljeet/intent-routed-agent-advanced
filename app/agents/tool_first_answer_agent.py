@@ -63,6 +63,18 @@ class ToolFirstAnswerAgent:
             state["final_answer"] = self._generate_empty_query_response()
             return state
         
+        # Handle clarification requests early to prevent timeout loops
+        if state.get("needs_clarification", False):
+            missing_info = state.get("missing_info", {})
+            clarification_msg = self._generate_clarification_message(query, missing_info)
+            state["final_answer"] = clarification_msg
+            logger.info_structured(
+                "Generated clarification message for vague query",
+                conversation_id=state.get("conversation_id"),
+                clarification_type=missing_info.get("clarification_type", "unknown")
+            )
+            return state
+        
         try:
             # Check if tools were already executed in the workflow
             tool_results = state.get("tool_results", [])
@@ -806,6 +818,57 @@ Keep the response concise and natural.
                 error=str(e)
             )
             return f"I understand you're asking about: {query}. Based on my capabilities, I can help with: {capabilities}. To assist you better, could you provide more specific details?\n\n**Follow-up questions:**\n- What specific values would you like to work with?\n- Could you provide more details about what you're trying to accomplish?\n- Would you like to see examples of what I can help with?"
+    
+    def _generate_clarification_message(self, query: str, missing_info: Dict[str, Any]) -> str:
+        """
+        Generate a helpful clarification message for vague queries.
+        """
+        reasoning = missing_info.get("reasoning", "Your query needs more specific information.")
+        missing_items = missing_info.get("missing_information", [])
+        suggested_examples = missing_info.get("suggested_examples", [])
+        
+        # Build clarification message
+        message_parts = [
+            f"I'd be happy to help with your request: \"{query}\"",
+            "",
+            reasoning
+        ]
+        
+        if missing_items:
+            message_parts.append("")
+            message_parts.append("To provide accurate information, I need:")
+            for item in missing_items:
+                message_parts.append(f"- {item}")
+        
+        if suggested_examples:
+            message_parts.append("")
+            message_parts.append("**Examples of what you can ask:**")
+            for example in suggested_examples:
+                if example:
+                    message_parts.append(f"- {example}")
+        
+        # Add generic examples based on query keywords
+        query_lower = query.lower()
+        if "order" in query_lower:
+            message_parts.append("")
+            message_parts.append("**Specific examples:**")
+            message_parts.append("- Details of order SO-2024-001")
+            message_parts.append("- Orders from March 2024")
+            message_parts.append("- Orders for customer Acme Corporation")
+        elif "customer" in query_lower:
+            message_parts.append("")
+            message_parts.append("**Specific examples:**")
+            message_parts.append("- Find customer Acme Corporation")
+            message_parts.append("- List all customers in Northeast territory")
+            message_parts.append("- Show enterprise customers")
+        elif "sales" in query_lower:
+            message_parts.append("")
+            message_parts.append("**Specific examples:**")
+            message_parts.append("- What were total sales in March 2024?")
+            message_parts.append("- Sales summary for customer Acme Corporation")
+            message_parts.append("- Sales by sales rep Tom Richards")
+        
+        return "\n".join(message_parts)
     
     async def _generate_answer_with_tool_data(self, query: str, tool_result: Dict[str, Any], state: Dict[str, Any]) -> str:
         """

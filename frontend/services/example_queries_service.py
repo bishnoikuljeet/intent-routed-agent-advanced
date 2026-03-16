@@ -106,7 +106,14 @@ class ExampleQueriesService:
             "translate_text": "general_query",
             "detect_language": "data_validation",
             "correct_typos": "general_query",
-            "normalize_text": "data_validation"
+            "normalize_text": "data_validation",
+            "get_order_details": "database_query",
+            "search_customers": "database_query",
+            "get_sales_summary": "database_query",
+            "get_customer_orders": "database_query",
+            "get_low_stock_items": "database_query",
+            "search_inventory": "database_query",
+            "query_database": "database_query"
         }
         
         # Check if should_use contains parentheses (alternative tool)
@@ -141,7 +148,8 @@ class ExampleQueriesService:
             "KNOWLEDGE SERVER": [],
             "UTILITY SERVER": [],
             "SYSTEM SERVER": [],
-            "LANGUAGE SERVER": []
+            "LANGUAGE SERVER": [],
+            "DATABASE SERVER": []
         }
         
         # Categorize based on tool mapping (more reliable)
@@ -175,6 +183,11 @@ class ExampleQueriesService:
             elif tool in ["translate_text", "detect_language", "correct_typos", "normalize_text"]:
                 categories["LANGUAGE SERVER"].append(query)
                 categorized = True
+            elif tool in ["get_order_details", "search_customers", "get_sales_summary", 
+                       "get_customer_orders", "get_low_stock_items", "search_inventory", 
+                       "query_database"]:
+                categories["DATABASE SERVER"].append(query)
+                categorized = True
             
             # If not categorized by tool, try to categorize by intent
             if not categorized:
@@ -187,6 +200,8 @@ class ExampleQueriesService:
                     categories["UTILITY SERVER"].append(query)
                 elif intent == "system_question":
                     categories["SYSTEM SERVER"].append(query)
+                elif intent == "database_query":
+                    categories["DATABASE SERVER"].append(query)
                 else:
                     # Default to knowledge server for general queries
                     categories["KNOWLEDGE SERVER"].append(query)

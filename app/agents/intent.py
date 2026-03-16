@@ -31,6 +31,32 @@ class IntentAgent:
         
         query = state.get("current_query", "")
         
+        # Early detection of malicious database operations
+        malicious_keywords = [
+            "delete", "drop", "truncate", "alter", "update", "insert",
+            "grant", "revoke", "exec", "execute", "modify", "remove"
+        ]
+        
+        query_lower = query.lower()
+        if any(keyword in query_lower for keyword in malicious_keywords):
+            logger.warning_structured(
+                "Malicious intent detected",
+                conversation_id=state.get("conversation_id"),
+                query=query
+            )
+            
+            state["detected_intent"] = "general_query"
+            state["extracted_entities"] = {}
+            state["needs_clarification"] = True
+            state["missing_info"] = {
+                "reasoning": "Query contains forbidden database operations",
+                "clarification_question": "I can only retrieve information from the database. I cannot modify, delete, or update data. How can I help you find information instead?"
+            }
+            state["execution_trace"]["agents_called"].append(self.name)
+            state["execution_trace"]["timestamps"][self.name] = datetime.utcnow().isoformat()
+            
+            return state
+        
         system_prompt = """You are an intent classification agent. Classify the user's query into one of these intents:
 
 1. knowledge_lookup: Questions about documented information, policies, architecture, procedures, definitions, OR document operations
@@ -43,14 +69,15 @@ class IntentAgent:
    - "What changed between v2.1 and v2.2?" → knowledge_lookup (document comparison)
    - "Who modified the security policy document?" → knowledge_lookup (document tracking)
 
-2. metrics_lookup: Questions about current/live BUSINESS/APPLICATION system state, performance data, or runtime metrics
-   - "What is our current SLO compliance?" → metrics_lookup (asking about live data)
-   - "Are we meeting our SLO?" → metrics_lookup (asking about current performance)
-   - "What is the latency right now?" → metrics_lookup (asking about current metrics)
-   - "Show me recent error rates" → metrics_lookup (asking about runtime data)
+2. metrics_lookup: Questions about current/live SYSTEM/SERVICE performance, monitoring data, or runtime metrics (NOT sales/business data)
+   - "What is our current SLO compliance?" → metrics_lookup (asking about service performance)
+   - "Are we meeting our SLO?" → metrics_lookup (asking about service targets)
+   - "What is the latency right now?" → metrics_lookup (asking about service metrics)
+   - "Show me recent error rates" → metrics_lookup (asking about service errors)
    - "Show me all active alerts for payment_service" → metrics_lookup (asking about service alerts)
    - "List alerts for auth_service" → metrics_lookup (asking about service monitoring)
    - NOTE: Questions about AGENT/TOOL health are system_question, NOT metrics_lookup
+   - NOTE: Questions about sales, orders, customers, inventory are database_query, NOT metrics_lookup
 
 3. calculation_compare: Query requiring NUMERIC calculations or NUMERIC comparisons
    - "Is 150ms greater than 100ms?" → calculation_compare (numeric comparison)
@@ -74,11 +101,30 @@ class IntentAgent:
    - "What parameters does tool X accept?" → system_question (asking about tool metadata)
    - NOTE: This is for the AI system itself, NOT business services/applications
 
-6. general_query: General questions not fitting other categories
+6. database_query: Queries requiring database retrieval from sales or inventory systems
+   - "Details of order SO-2024-001" → database_query (specific order lookup)
+   - "Show me order number SO-2024-003" → database_query (order retrieval)
+   - "List all customers in Northeast territory" → database_query (customer search)
+   - "Show enterprise customers" → database_query (customer filtering)
+   - "Find customer Acme Corporation" → database_query (customer search)
+   - "Which products are low on stock?" → database_query (inventory query)
+   - "Show me items that need reordering" → database_query (inventory status)
+   - "Find product PROD-A100" → database_query (product search)
+   - "What were total sales in March 2024?" → database_query (sales aggregation)
+   - "Sales summary from 2024-03-01 to 2024-03-31" → database_query (sales reporting)
+   - "How many orders do we have in total?" → database_query (order count aggregation)
+   - "What is our average order value?" → database_query (sales metric calculation from DB)
+   - "Show me the top 5 customers by order volume" → database_query (customer ranking from DB)
+   - "Show me orders for customer Acme Corporation" → database_query (customer orders)
+   - "Get order SO-2024-001 and show me the customer's other orders" → database_query (multi-step DB query)
+   - "Show orders with products that are currently low in stock" → database_query (cross-database query)
+   - NOTE: Database queries are about retrieving data from sales/inventory/customer databases, NOT about system/service metrics
+
+7. general_query: General questions not fitting other categories
 
 CRITICAL DISTINCTIONS:
 - "What IS" (definition/policy) → knowledge_lookup
-- "What IS our current/Are we" (live state) → metrics_lookup
+- "What IS our current/Are we" (live service state) → metrics_lookup
 - "Compare documents/versions" → knowledge_lookup (NOT calculation_compare)
 - "Compare numbers/metrics" → calculation_compare
 - "Agent/tool/workflow health or status" → system_question (NOT metrics_lookup)
@@ -86,6 +132,8 @@ CRITICAL DISTINCTIONS:
 - "Alerts for business services (payment_service, auth_service, etc.)" → metrics_lookup (NOT system_question)
 - "Alerts for agents/tools (planner agent, executor agent, etc.)" → system_question (NOT metrics_lookup)
 - "Check/Validate/Verify/Test format/structure" → data_validation (NOT general_query)
+- "Sales/orders/customers/inventory/products data" → database_query (NOT metrics_lookup)
+- "Average order value/total sales/order count" → database_query (NOT metrics_lookup)
 
 Extract relevant entities from the query.
 

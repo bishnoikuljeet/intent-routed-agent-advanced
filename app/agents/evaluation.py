@@ -62,6 +62,49 @@ Respond in JSON format:
     "retry_reason": null
 }"""
         
+        # Check for non-retryable error types
+        non_retryable_errors = []
+        for result in tool_results:
+            if not result.get("success"):
+                error_type = result.get("error_type")
+                if error_type in ["not_found", "validation_failed", "configuration_error"]:
+                    non_retryable_errors.append({
+                        "tool": result.get("tool_name"),
+                        "error_type": error_type,
+                        "error": result.get("error")
+                    })
+        
+        # If we have non-retryable errors, don't retry
+        if non_retryable_errors:
+            logger.info_structured(
+                "Non-retryable errors detected",
+                conversation_id=state.get("conversation_id"),
+                errors=non_retryable_errors
+            )
+            
+            # Set high confidence for "not_found" - we're confident the data doesn't exist
+            if any(e["error_type"] == "not_found" for e in non_retryable_errors):
+                state["confidence_score"] = 0.9
+            else:
+                state["confidence_score"] = 0.5
+            
+            if "metadata" not in state:
+                state["metadata"] = {}
+            state["metadata"]["evaluation"] = {
+                "quality_score": 0.8,
+                "confidence_score": state["confidence_score"],
+                "completeness_score": 0.8,
+                "reasoning_valid": True,
+                "issues_found": [f"{e['error_type']}: {e['error']}" for e in non_retryable_errors],
+                "should_retry": False,
+                "retry_reason": None
+            }
+            
+            state["execution_trace"]["agents_called"].append(self.name)
+            state["execution_trace"]["timestamps"][self.name] = datetime.utcnow().isoformat()
+            
+            return state
+        
         context = {
             "query": query,
             "reasoning": reasoning_output,

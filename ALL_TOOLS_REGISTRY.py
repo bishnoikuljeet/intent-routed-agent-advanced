@@ -1,11 +1,138 @@
 """
 Complete MCP Tools Registry
-All 35 tools with descriptions, schemas, and metadata
+All 38 tools with descriptions, schemas, and metadata
 Generated from enhanced Intent-Routed Agent Advanced system
 (Simplified: removed redundant knowledge tools - policy_lookup, document_lookup, configuration_lookup)
 """
 
 TOOL_REGISTRY = {
+    "database": {
+        "server_name": "DatabaseMCPServer",
+        "description": "Database query tools for sales and inventory data",
+        "total_tools": 7,
+        "tools": {
+            "get_order_details": {
+                "name": "get_order_details",
+                "description": "Get detailed information about a specific sales order by order number",
+                "category": "database",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "order_number": {"type": "string", "description": "Order number (e.g., SO-2024-001)"}
+                    },
+                    "required": ["order_number"]
+                },
+                "output_schema": {"type": "object"},
+                "use_cases": ["Order lookup", "Order details retrieval"],
+                "examples": [{"order_number": "SO-2024-001"}]
+            },
+            "search_customers": {
+                "name": "search_customers",
+                "description": "Search for customers by name, territory, or customer type",
+                "category": "database",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "customer_name": {"type": "string", "description": "Customer name to search for"},
+                        "territory": {"type": "string", "description": "Sales territory"},
+                        "customer_type": {"type": "string", "description": "Customer type (enterprise, mid-market, small-business)"},
+                        "limit": {"type": "integer", "description": "Maximum results", "default": 10}
+                    }
+                },
+                "output_schema": {"type": "object"},
+                "use_cases": ["Customer search", "Territory filtering"],
+                "examples": [{"territory": "Northeast"}, {"customer_name": "Acme"}]
+            },
+            "get_sales_summary": {
+                "name": "get_sales_summary",
+                "description": "Get sales summary for a date range with optional filters",
+                "category": "database",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "start_date": {"type": "string", "description": "Start date (YYYY-MM-DD)"},
+                        "end_date": {"type": "string", "description": "End date (YYYY-MM-DD)"},
+                        "rep_id": {"type": "integer", "description": "Sales rep ID filter"},
+                        "customer_id": {"type": "integer", "description": "Customer ID filter"}
+                    },
+                    "required": ["start_date", "end_date"]
+                },
+                "output_schema": {"type": "object"},
+                "use_cases": ["Sales reporting", "Revenue analysis"],
+                "examples": [{"start_date": "2024-03-01", "end_date": "2024-03-31"}]
+            },
+            "get_customer_orders": {
+                "name": "get_customer_orders",
+                "description": "Get order history for a specific customer",
+                "category": "database",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "customer_id": {"type": "integer", "description": "Customer ID"},
+                        "limit": {"type": "integer", "description": "Maximum results", "default": 10}
+                    },
+                    "required": ["customer_id"]
+                },
+                "output_schema": {"type": "object"},
+                "use_cases": ["Customer order history", "Order tracking"],
+                "examples": [{"customer_id": 1, "limit": 5}]
+            },
+            "get_low_stock_items": {
+                "name": "get_low_stock_items",
+                "description": "Get inventory items that are low on stock or below reorder point",
+                "category": "database",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "threshold": {"type": "integer", "description": "Stock threshold"},
+                        "category_id": {"type": "integer", "description": "Category filter"},
+                        "limit": {"type": "integer", "description": "Maximum results", "default": 20}
+                    }
+                },
+                "output_schema": {"type": "object"},
+                "use_cases": ["Inventory alerts", "Reorder management"],
+                "examples": [{"limit": 10}]
+            },
+            "search_inventory": {
+                "name": "search_inventory",
+                "description": "Search inventory items by SKU, name, or category",
+                "category": "database",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "sku": {"type": "string", "description": "Product SKU"},
+                        "item_name": {"type": "string", "description": "Item name"},
+                        "category_id": {"type": "integer", "description": "Category ID"},
+                        "limit": {"type": "integer", "description": "Maximum results", "default": 20}
+                    }
+                },
+                "output_schema": {"type": "object"},
+                "use_cases": ["Inventory search", "Product lookup"],
+                "examples": [{"item_name": "Widget"}]
+            },
+            "query_database": {
+                "name": "query_database",
+                "description": "Execute natural language database queries. PREFERRED for queries without specific date ranges. Handles 'total', 'all', 'how many' queries automatically. Use this when user doesn't specify dates.",
+                "category": "database",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "database": {"type": "string", "description": "Database name (sales or inventory)"},
+                        "description": {"type": "string", "description": "Natural language description of query"},
+                        "filters": {"type": "object", "description": "Optional filters"}
+                    },
+                    "required": ["database", "description"]
+                },
+                "output_schema": {"type": "object"},
+                "use_cases": ["Total/all-time queries", "Queries without specific dates", "How many orders total", "Average order value overall", "Complex queries", "Ad-hoc analysis"],
+                "examples": [
+                    {"database": "sales", "description": "How many orders do we have in total"},
+                    {"database": "sales", "description": "What is our average order value"},
+                    {"database": "sales", "description": "Total revenue by product category"}
+                ]
+            }
+        }
+    },
     "observability": {
         "server_name": "ObservabilityMCPServer",
         "description": "Comprehensive observability and monitoring tools",
@@ -1066,9 +1193,68 @@ TOOL_REGISTRY = {
                     {"content": '{"timeout": 30, "retries": 3}', "input_format": "json", "output_format": "yaml"},
                     {"content": "timeout: 30\nretries: 3", "input_format": "yaml", "output_format": "json"}
                 ]
+            },
+            
+            "get_current_datetime": {
+                "name": "get_current_datetime",
+                "description": "Get the current date and time",
+                "category": "datetime",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "timezone": {
+                            "type": "string",
+                            "description": "Timezone (e.g., 'UTC', 'America/New_York', 'Asia/Kolkata')",
+                            "default": "UTC"
+                        },
+                        "format": {
+                            "type": "string",
+                            "description": "Output format: 'iso', 'readable', 'timestamp'",
+                            "enum": ["iso", "readable", "timestamp"],
+                            "default": "iso"
+                        }
+                    },
+                    "required": []
+                },
+                "output_schema": {
+                    "type": "object",
+                    "properties": {
+                        "datetime": {
+                            "type": "string",
+                            "description": "Current date and time"
+                        },
+                        "timezone": {
+                            "type": "string",
+                            "description": "Timezone used"
+                        },
+                        "unix_timestamp": {
+                            "type": "number",
+                            "description": "Unix timestamp"
+                        },
+                        "components": {
+                            "type": "object",
+                            "description": "Date and time components",
+                            "properties": {
+                                "year": {"type": "integer"},
+                                "month": {"type": "integer"},
+                                "day": {"type": "integer"},
+                                "hour": {"type": "integer"},
+                                "minute": {"type": "integer"},
+                                "second": {"type": "integer"},
+                                "weekday": {"type": "string"}
+                            }
+                        }
+                    }
+                },
+                "use_cases": ["Date-aware responses", "Time-based calculations", "Timestamp generation"],
+                "examples": [
+                    {"timezone": "UTC", "format": "iso"},
+                    {"timezone": "America/New_York", "format": "readable"},
+                    {"format": "timestamp"}
+                ]
             }
         },
-        "total_tools": 8
+        "total_tools": 9
     },
     
     "system": {
@@ -1425,28 +1611,24 @@ TOTAL_SERVERS = len(TOOL_REGISTRY)
 
 # Tool categories
 CATEGORIES = {
-    "monitoring": ["service_metrics", "latency_history", "error_rate_lookup", "service_status"],
-    "incident_management": ["alert_management", "incident_management"],
-    "performance_analysis": ["performance_profiling"],
+    "database": ["get_order_details", "search_customers", "get_sales_summary", "get_customer_orders", "get_low_stock_items", "search_inventory", "query_database"],
+    "monitoring": ["service_metrics", "latency_history", "error_rate_lookup", "service_status", "slo_tracking"],
+    "alerting": ["alert_management"],
     "logging": ["log_aggregation"],
-    "slo_monitoring": ["slo_tracking"],
-    "capacity_management": ["capacity_planning"],
+    "capacity": ["capacity_planning"],
+    "incidents": ["incident_management"],
     "search": ["semantic_search"],
-    "version_control": ["document_versioning"],
-    "audit": ["change_tracking"],
+    "versioning": ["document_versioning"],
+    "tracking": ["change_tracking"],
     "recommendations": ["recommendation_engine"],
     "knowledge_graph": ["knowledge_graph_query"],
-    "comparison": ["compare_values"],
-    "calculation": ["percentage_difference", "time_range_calculator"],
-    "statistics": ["statistics_summary"],
-    "forecasting": ["trend_analysis"],
-    "anomaly_detection": ["anomaly_detection"],
+    "comparison": ["compare_values", "percentage_difference"],
+    "time_calculations": ["time_range_calculator"],
+    "statistics": ["statistics_summary", "trend_analysis", "anomaly_detection"],
     "validation": ["data_validation"],
-    "data_transformation": ["json_yaml_parser"],
-    "registry": ["tool_registry_lookup"],
-    "health_monitoring": ["agent_health"],
-    "workflow_monitoring": ["workflow_status"],
-    "server_inventory": ["list_mcp_servers"],
+    "parsing": ["json_yaml_parser"],
+    "datetime": ["get_current_datetime"],
+    "system_tools": ["tool_registry_lookup", "agent_health", "workflow_status", "list_mcp_servers", "performance_profiling"],
     "language_detection": ["detect_language"],
     "translation": ["translate_text"],
     "text_correction": ["correct_typos"],

@@ -34,3 +34,6 @@ textblob>=0.17.1
 
 # MCP Protocol
 mcp>=0.9.0
+
+# Database
+aiomysql>=0.2.0

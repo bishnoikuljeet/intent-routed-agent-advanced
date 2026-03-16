@@ -9,6 +9,7 @@ class IntentType(str, Enum):
     CALCULATION_COMPARE = "calculation_compare"
     SYSTEM_QUESTION = "system_question"
     DATA_VALIDATION = "data_validation"
+    DATABASE_QUERY = "database_query"
     GENERAL_QUERY = "general_query"
 
 
@@ -41,6 +42,7 @@ class ToolResult(BaseModel):
     success: bool
     result: Any
     error: Optional[str] = None
+    error_type: Optional[str] = None  # "not_found", "validation_failed", "execution_failed", "configuration_error"
     latency_ms: float
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
