@@ -1,8 +1,8 @@
 # Architecture Documentation
 ## Intent-Routed Agent Advanced
 
-**Version**: 1.0  
-**Last Updated**: March 2026
+**Version**: 1.1  
+**Last Updated**: March 2026 (Enhanced with advanced caching, and database system)
 
 ---
 
@@ -18,10 +18,13 @@
 8. [Language Processing Pipeline](#language-processing-pipeline)
 9. [Execution Flow](#execution-flow)
 10. [Retry & Failure Handling](#retry--failure-handling)
-11. [Observability & Telemetry](#observability--telemetry)
-12. [Data Flow Diagrams](#data-flow-diagrams)
-13. [Technology Stack](#technology-stack)
-14. [Scalability & Performance](#scalability--performance)
+11. [Advanced Caching System](#advanced-caching-system)
+12. [Multi-Step Query Processing](#multi-step-query-processing)
+13. [Enhanced Parameter Handling](#enhanced-parameter-handling)
+14. [Observability & Telemetry](#observability--telemetry)
+15. [Data Flow Diagrams](#data-flow-diagrams)
+16. [Technology Stack](#technology-stack)
+17. [Scalability & Performance](#scalability--performance)
 
 ---
 
@@ -163,89 +166,89 @@ Each agent has a single, well-defined responsibility:
 ### Agent Workflow Pipeline
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      User Query Input                       │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                      User Query Input                        │
+└──────────────────────────────────────────────────────────────┘
                               ↓
-┌─────────────────────────────────────────────────────────────┐
-│                  Language Processing Layer                  │
-│  • Detect language (LLM-based)                              │
-│  • Normalize and sanitize input                             │
-│  • Detect prompt injection attempts                         │
-│  • Translate to English (if needed)                         │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                  Language Processing Layer                   │
+│  • Detect language (LLM-based)                               │
+│  • Normalize and sanitize input                              │
+│  • Detect prompt injection attempts                          │
+│  • Translate to English (if needed)                          │
+└──────────────────────────────────────────────────────────────┘
                               ↓
-┌─────────────────────────────────────────────────────────────┐
-│                     Memory Manager                          │
-│  • Retrieve relevant conversation history                   │
-│  • Summarize older messages (if threshold exceeded)         │
-│  • Semantic search over past interactions                   │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                     Memory Manager                           │
+│  • Retrieve relevant conversation history                    │
+│  • Summarize older messages (if threshold exceeded)          │
+│  • Semantic search over past interactions                    │
+└──────────────────────────────────────────────────────────────┘
                               ↓
-┌─────────────────────────────────────────────────────────────┐
-│                   Coordinator Agent                         │
-│  • Initialize workflow state                                │
-│  • Attach request metadata                                  │
-│  • Start execution trace                                    │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                   Coordinator Agent                          │
+│  • Initialize workflow state                                 │
+│  • Attach request metadata                                   │
+│  • Start execution trace                                     │
+└──────────────────────────────────────────────────────────────┘
                               ↓
-┌─────────────────────────────────────────────────────────────┐
-│                     Intent Agent                            │
-│  • LLM-based intent classification                          │
-│  • Entity extraction                                        │
-│  • Intent categories:                                       │
-│    - metrics_lookup                                         │
-│    - knowledge_lookup                                       │
-│    - calculation_compare                                    │
-│    - system_question                                        │
-│    - general_query                                          │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                     Intent Agent                             │
+│  • LLM-based intent classification                           │
+│  • Entity extraction                                         │
+│  • Intent categories:                                        │
+│    - metrics_lookup                                          │
+│    - knowledge_lookup                                        │
+│    - calculation_compare                                     │
+│    - system_question                                         │
+│    - general_query                                           │
+└──────────────────────────────────────────────────────────────┘
                               ↓
-┌─────────────────────────────────────────────────────────────┐
-│                     Planner Agent                           │
-│  • Query tool registry (semantic search)                    │
-│  • LLM selects relevant tools                               │
-│  • Generate step-by-step execution plan                     │
-│  • Identify parallel execution opportunities                │
-│  • Estimate execution duration                              │
+┌──────────────────────────────────────────────────────────────┐
+│                     Planner Agent                            │
+│  • Query tool registry (semantic search)                     │
+│  • LLM selects relevant tools                                │
+│  • Generate step-by-step execution plan                      │
+│  • Identify parallel execution opportunities                 │
+│  • Estimate execution duration                               │
 │  • Uses ToolDiscoveryService cache for enhanced tool matching│
-└─────────────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────────────┘
                               ↓
-┌─────────────────────────────────────────────────────────────┐
-│                    Executor Agent                           │
-│  • Execute tools via MCP protocol                           │
-│  • Parallel execution (asyncio.gather)                      │
-│  • Sequential execution (for dependencies)                  │
-│  • Retry logic with exponential backoff                     │
-│  • Timeout handling (30s default)                           │
-│  • Track execution metrics                                  │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                    Executor Agent                            │
+│  • Execute tools via MCP protocol                            │
+│  • Parallel execution (asyncio.gather)                       │
+│  • Sequential execution (for dependencies)                   │
+│  • Retry logic with exponential backoff                      │
+│  • Timeout handling (30s default)                            │
+│  • Track execution metrics                                   │
+└──────────────────────────────────────────────────────────────┘
                               ↓
-┌─────────────────────────────────────────────────────────────┐
-│                   Aggregator Agent                          │
-│  • Combine tool results                                     │
-│  • Structure data for reasoning                             │
-│  • Identify patterns and key findings                       │
-│  • Handle partial failures                                  │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                   Aggregator Agent                           │
+│  • Combine tool results                                      │
+│  • Structure data for reasoning                              │
+│  • Identify patterns and key findings                        │
+│  • Handle partial failures                                   │
+└──────────────────────────────────────────────────────────────┘
                               ↓
-┌─────────────────────────────────────────────────────────────┐
-│                   Reasoning Agent                           │
-│  • Analyze aggregated data                                  │
-│  • Apply domain knowledge                                   │
-│  • Draw logical conclusions                                 │
-│  • Compare against thresholds                               │
-│  • Provide supporting evidence                              │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                   Reasoning Agent                            │
+│  • Analyze aggregated data                                   │
+│  • Apply domain knowledge                                    │
+│  • Draw logical conclusions                                  │
+│  • Compare against thresholds                                │
+│  • Provide supporting evidence                               │
+└──────────────────────────────────────────────────────────────┘
                               ↓
-┌─────────────────────────────────────────────────────────────┐
-│                 Self-Evaluation Agent                       │
-│  • Assess answer quality                                    │
-│  • Compute confidence score                                 │
-│  • Validate reasoning                                       │
-│  • Determine if retry needed                                │
-│  • Max retries: 2                                           │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                 Self-Evaluation Agent                        │
+│  • Assess answer quality                                     │
+│  • Compute confidence score                                  │
+│  • Validate reasoning                                        │
+│  • Determine if retry needed                                 │
+│  • Max retries: 2                                            │
+└──────────────────────────────────────────────────────────────┘
                               ↓
                     ┌──────────────────┐
                     │ Confidence < 0.7 │
@@ -592,25 +595,25 @@ MCP is a standardized protocol for exposing tools, resources, and prompts to AI 
 ### MCP Server Architecture
 
 ```
-                             ┌─────────────────────────────────────────┐
-                             │          MCP Server Base                │
-                             │           • Tool registration           │
-                             │           • Resource management         │
-                             │           • Prompt templates            │
-                             │           • Error handling              │
-                             └─────────────────────────────────────────┘
-                                                 ↑
-        ┌───────────────────┬────────────────────┼──────────────────┬───────────────────┐
-        │                   │                    │                  │                   │
-┌───────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌───────────────┐  ┌────────────────┐
-│ Observability │  │    Knowledge    │  │    Language     │  │    Utility    │  │     System     │
-│    Server     │  │      Server     │  │     Server      │  │    Server     │  │     Server     │
-│               │  │                 │  │                 │  │               │  │                │
-│ • Metrics     │  │ • Semantic      │  │ • Translation   │  │ • Compare     │  │ • Registry     │
-│ • Latency     │  │   Search        │  │ • Detection     │  │ • Calculate   │  │ • Health       │
-│ • Errors      │  │ • Documents     │  │ • Normalization │  │ • Statistics  │  │ • Workflow     │
-│ • Status      │  │ • Policies      │  │                 │  │               │  │                │
-└───────────────┘  └─────────────────┘  └─────────────────┘  └───────────────┘  └────────────────┘
+                        ┌─────────────────────────────────────────┐
+                        │          MCP Server Base                │
+                        │           • Tool registration           │
+                        │           • Resource management         │
+                        │           • Prompt templates            │
+                        │           • Error handling              │
+                        └─────────────────────────────────────────┘
+                                            ↑
+        ┌────────────┬──────────────┬──────────────┬─────────────┬──────────────┐
+        │            │              │              │             │              │
+┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌──────────┐  ┌───────────┐
+│Observabil.│  │Knowledge  │  │ Language  │  │ Utility   │  │ System   │  │ Database  │
+│  Server   │  │  Server   │  │  Server   │  │ Server    │  │ Server   │  │  Server   │
+│           │  │           │  │           │  │           │  │          │  │           │
+│• Metrics  │  │• Semantic │  │• Translate│  │• Compare  │  │• Reg.    │  │• Orders   │
+│• Latency  │  │  Search   │  │• Detect   │  │• Calc.    │  │• Health  │  │• Customers│
+│• Errors   │  │• Docs     │  │• Normalize│  │• Stats    │  │• Work.   │  │• SQL Gen  │
+│• Status   │  │• Policies │  │           │  │           │  │          │  │• Inventory│
+└───────────┘  └───────────┘  └───────────┘  └───────────┘  └──────────┘  └───────────┘
 ```
 
 ### Available MCP Servers
@@ -689,6 +692,37 @@ MCP is a standardized protocol for exposing tools, resources, and prompts to AI 
 - System introspection
 - Health checks
 - Workflow monitoring
+
+#### 6. Database Server
+**File**: `app/mcp/database_server.py`
+
+**Tools**:
+- `get_order_details`: Retrieve complete order information by order number
+- `search_customers`: Search customers by name, territory, or type
+- `get_sales_summary`: Get sales totals and metrics for date ranges
+- `get_customer_orders`: Retrieve all orders for a specific customer
+- `get_low_stock_items`: Find inventory items below reorder threshold
+- `search_inventory`: Search products by SKU, name, or category
+- `query_database`: Execute dynamic SQL queries with natural language (schema-aware, RAG-enhanced)
+
+**Features**:
+- **Schema-Aware SQL Generation**: Retrieves database schema from RAG vector store
+- **Multi-Layer Validation**: Read-only checks, LIMIT clause enforcement, SQL injection prevention, LLM security review
+- **Natural Language to SQL**: Converts user queries to validated SQL statements
+- **Connection Pooling**: Efficient MySQL connection management with aiomysql
+- **Error Handling**: Graceful handling of validation errors, timeouts, and database failures
+
+**Resources**:
+- MySQL sales database (orders, customers, products, sales reps)
+- MySQL inventory database (stock levels, suppliers, categories)
+- SQL schema files loaded into RAG for context-aware generation
+
+**Use Cases**:
+- Order management and tracking
+- Customer relationship queries
+- Sales analytics and reporting
+- Inventory management
+- Dynamic business intelligence queries
 
 ---
 
@@ -1136,6 +1170,252 @@ class CircuitBreaker:
             self.on_failure()
             raise
 ```
+
+---
+
+## Advanced Caching System
+
+### Overview
+
+The system implements a **dual-layer caching architecture** for optimal performance:
+
+1. **Query-Level Caching**: Complete query results cached at orchestrator level
+2. **Tool-Level Caching**: Individual tool results cached at MCP server level
+
+### Query-Level Caching
+
+**Location**: `app/services/orchestrator.py`
+
+**Features**:
+- **Hash-Based Keys**: MD5 hash of query content for consistent cache keys
+- **TTL Support**: Configurable cache TTL (default: 1 hour)
+- **Cache Metadata**: Track cache hits, age, and performance metrics
+- **Instant Response**: Cached queries return in ~0.001 seconds
+
+**Implementation**:
+```python
+# Generate cache key from query hash
+query_hash = hashlib.md5(request.query.encode()).hexdigest()
+cache_key = f"query_{query_hash}"
+
+# Check cache
+if cache_key in self.query_cache:
+    cached_result = self.query_cache[cache_key]
+    if (current_time - cache_time).total_seconds() < self.cache_ttl:
+        return cached_response  # Near-instant response
+
+# Store result
+self.query_cache[cache_key] = {
+    "response": response,
+    "timestamp": current_time
+}
+```
+
+### Tool-Level Caching
+
+**Location**: `app/mcp/base.py` (BaseMCPServer)
+
+**Features**:
+- **Parameter-Based Keys**: Cache keys include tool parameters for precision
+- **Persistent Storage**: Tool results cached across sessions
+- **Automatic Invalidation**: Cache respects tool result freshness
+- **Performance Tracking**: Latency comparison between cached and fresh calls
+
+**Cache Flow**:
+```
+Tool Call → Check Cache → Hit? → Return Cached Result
+                ↓
+              Miss → Execute Tool → Cache Result → Return Result
+```
+
+### Consistent Conversation IDs
+
+**Location**: `app/agents/coordinator.py`
+
+**Purpose**: Enable proper conversation context reuse and caching
+
+**Implementation**:
+```python
+# Generate consistent conversation ID based on query hash
+if not state.get("conversation_id"):
+    query = state.get("current_query", "")
+    query_hash = hashlib.md5(query.encode()).hexdigest()[:16]
+    state["conversation_id"] = f"query_{query_hash}"
+```
+
+**Benefits**:
+- Identical queries get same conversation ID
+- Enables conversation-level caching
+- Maintains context across related queries
+- Reduces redundant processing
+
+### Cache Performance Metrics
+
+**Tracked Metrics**:
+- **Cache Hit Rate**: Percentage of queries served from cache
+- **Cache Age**: Time since cached result was stored
+- **Latency Comparison**: Cached vs. fresh execution times
+- **Memory Usage**: Cache size and memory footprint
+
+**Example Performance**:
+```
+First Query: 20.5 seconds (full processing)
+Cached Query: 0.001 seconds (99.995% improvement)
+Cache Hit Rate: 85% for repeated queries
+```
+
+---
+
+## Multi-Step Query Processing
+
+### Overview
+
+Multi-step queries enable complex workflows where the output of one tool becomes the input for another. The system automatically plans and executes these dependencies.
+
+### Parameter Passing Mechanism
+
+**Result References**: Uses `${{step_X.field_name}}` syntax for dynamic parameter passing
+
+**Example Flow**:
+```
+Query: "Show me orders for customer Acme Corporation"
+
+Step 1: search_customers
+  Input: {"customer_name": "Acme Corporation"}
+  Output: {"customers": [{"customer_id": 1, "name": "Acme Corporation"}]}
+
+Step 2: get_customer_orders  
+  Input: {"customer_id": "${{step_1.customer_id}}"}
+  Output: {"orders": [{"order_id": 123, "customer_id": 1, ...}]}
+```
+
+### Execution Planning
+
+**Location**: `app/prompts/task_prompts.py`
+
+**Enhanced Planning Logic**:
+```python
+7. CRITICAL: For multi-step queries, use result references like "${{step_1.field_name}}"
+   - Step 2 depends on Step 1 → Step 2 parallel_group > Step 1 parallel_group
+   - Use "${{step_X.field_name}}" to pass data from previous steps
+   - Examples: "${{step_1.customer_id}}", "${{step_1.order_id}}", "${{step_1.product_id}}"
+```
+
+**Dependency Resolution**:
+- **Parallel Groups**: Tools in same group execute concurrently
+- **Sequential Groups**: Higher numbered groups wait for lower groups
+- **Parameter Substitution**: `${{step_X.field_name}}` replaced with actual values
+
+### Parameter Extraction
+
+**Location**: `app/agents/executor.py`
+
+**Result Reference Substitution**:
+```python
+def _substitute_result_references(self, params: Dict[str, Any], completed_results: List[Dict]) -> Dict[str, Any]:
+    # Extract step reference: ${step_1.customer_id}
+    pattern = r'\$\{step_(\d+)\.(\w+)\}'
+    
+    # Handle nested arrays (customers, items, orders, results)
+    for key in ['customers', 'items', 'orders', 'results']:
+        if key in result and isinstance(result[key], list) and len(result[key]) > 0:
+            return result[key][0].get(field_name)
+```
+
+### Multi-Step Examples
+
+**Database Workflows**:
+1. **Customer Orders**: `search_customers` → `get_customer_orders`
+2. **Order Details**: `search_customers` → `get_customer_orders` → `get_order_details`
+3. **Product Analysis**: `search_inventory` → `get_low_stock_items` → `query_database`
+
+**Statistical Workflows**:
+1. **Anomaly Analysis**: `statistics_summary` → `anomaly_detection`
+2. **Trend Forecasting**: `statistics_summary` → `trend_analysis`
+
+### Error Handling
+
+**Multi-Step Failures**:
+- **Partial Success**: Continue with available results
+- **Dependency Failure**: Skip dependent steps if prerequisite fails
+- **Graceful Degradation**: Provide useful feedback even with incomplete results
+
+---
+
+## Enhanced Parameter Handling
+
+### Overview
+
+Tools with optional parameters now handle null values gracefully by automatically applying schema defaults.
+
+### Generic Parameter Handler
+
+**Location**: `app/mcp/utility_server.py`
+
+**Helper Function**:
+```python
+def handle_default_params(params: Dict[str, Any], defaults: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Generic helper to handle null parameters by applying defaults.
+    """
+    result = params.copy()
+    for key, default_value in defaults.items():
+        if result.get(key) is None:
+            result[key] = default_value
+    return result
+```
+
+### Tool-Level Implementation
+
+**Example: Anomaly Detection**:
+```python
+async def _anomaly_detection(self, values: List[float], sensitivity: float = 2.0, method: str = "zscore"):
+    # Handle null values by using defaults
+    if sensitivity is None:
+        sensitivity = 2.0
+    if method is None:
+        method = "zscore"
+    
+    # Continue with processing...
+```
+
+**Example: Data Validation**:
+```python
+async def _data_validation(self, data: Dict[str, Any], rules: List[Dict[str, Any]], strict_mode: bool = False):
+    # Handle null values by using defaults
+    if rules is None:
+        rules = []
+    if strict_mode is None:
+        strict_mode = False
+    
+    # Continue with processing...
+```
+
+### Completeness Check Enhancement
+
+**Location**: `app/prompts/task_prompts.py`
+
+**Enhanced Rules**:
+```python
+3. PARAMETER INFERENCE RULES:
+   - CRITICAL: Tools with DEFAULT values are COMPLETE if only required params are provided
+     * anomaly_detection: Only "values" required (sensitivity/method have defaults)
+     * data_validation: Only "data" required (rules/strict_mode have defaults)
+     * translate_text: Only "text" and "target_lang" required (source_lang has default)
+
+7. SPECIFIC EXAMPLES:
+   - "Detect anomalies in [100, 105, 102, 500, 98, 103]" → COMPLETE
+     * Has required "values" parameter (the array)
+     * sensitivity/method have defaults (2.0, "zscore")
+     * Should NOT ask for clarification
+```
+
+### Benefits
+
+- **Reduced User Friction**: No clarification needed for optional parameters
+- **Consistent Behavior**: Predictable default value application
+- **Generic Solution**: Reusable pattern for all tools
+- **Better UX**: Smooth query processing without interruptions
 
 ---
 

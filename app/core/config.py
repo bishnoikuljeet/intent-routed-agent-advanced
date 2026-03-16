@@ -46,6 +46,20 @@ class Settings(BaseSettings):
     
     confidence_threshold: float = 0.7
     low_confidence_retry_enabled: bool = True
+    
+    # Database configuration - Sales DB
+    sales_db_host: str = "localhost"
+    sales_db_port: int = 3306
+    sales_db_name: str = "sales"
+    sales_db_user: str = "readonly_user"
+    sales_db_password: str = ""
+    
+    # Database configuration - Inventory DB
+    inventory_db_host: str = "localhost"
+    inventory_db_port: int = 3306
+    inventory_db_name: str = "inventory"
+    inventory_db_user: str = "readonly_user"
+    inventory_db_password: str = ""
 
 
 settings = Settings()

@@ -1,8 +1,29 @@
 from app.mcp.base import BaseMCPServer, MCPTool, MCPResource, MCPPrompt
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union
+from app.core.logging import logger
 import statistics
 import json
 import re
+from datetime import datetime, timezone
+import time
+
+
+def handle_default_params(params: Dict[str, Any], defaults: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Generic helper to handle null parameters by applying defaults.
+    
+    Args:
+        params: Input parameters that may contain null values
+        defaults: Default values for null parameters
+        
+    Returns:
+        Parameters with null values replaced by defaults
+    """
+    result = params.copy()
+    for key, default_value in defaults.items():
+        if result.get(key) is None:
+            result[key] = default_value
+    return result
 
 
 class UtilityMCPServer(BaseMCPServer):
@@ -194,6 +215,49 @@ class UtilityMCPServer(BaseMCPServer):
             },
             handler=self._json_yaml_parser
         ))
+        
+        self.register_tool(MCPTool(
+            name="get_current_datetime",
+            description="Get the current date and time",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "timezone": {
+                        "type": "string",
+                        "description": "Timezone (e.g., 'UTC', 'America/New_York', 'Asia/Kolkata')",
+                        "default": "UTC"
+                    },
+                    "format": {
+                        "type": "string",
+                        "description": "Output format: 'iso', 'readable', 'timestamp'",
+                        "enum": ["iso", "readable", "timestamp"],
+                        "default": "iso"
+                    }
+                },
+                "required": []
+            },
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "datetime": {"type": "string"},
+                    "timezone": {"type": "string"},
+                    "unix_timestamp": {"type": "number"},
+                    "components": {
+                        "type": "object",
+                        "properties": {
+                            "year": {"type": "integer"},
+                            "month": {"type": "integer"},
+                            "day": {"type": "integer"},
+                            "hour": {"type": "integer"},
+                            "minute": {"type": "integer"},
+                            "second": {"type": "integer"},
+                            "weekday": {"type": "string"}
+                        }
+                    }
+                }
+            },
+            handler=self._get_current_datetime
+        ))
     
     async def _compare_values(
         self,
@@ -358,12 +422,19 @@ class UtilityMCPServer(BaseMCPServer):
         sensitivity: float = 2.0,
         method: str = "zscore"
     ) -> Dict[str, Any]:
+        # Handle null values by using defaults
+        if sensitivity is None:
+            sensitivity = 2.0
+        if method is None:
+            method = "zscore"
+            
         if len(values) < 3:
             return {
                 "anomalies": [],
                 "anomaly_count": 0,
                 "anomaly_percentage": 0,
-                "method": method
+                "method": method,
+                "sensitivity": sensitivity
             }
         
         anomalies = []
@@ -430,6 +501,12 @@ class UtilityMCPServer(BaseMCPServer):
         rules: List[Dict[str, Any]],
         strict_mode: bool = False
     ) -> Dict[str, Any]:
+        # Handle null values by using defaults
+        if rules is None:
+            rules = []
+        if strict_mode is None:
+            strict_mode = False
+            
         errors = []
         warnings = []
         
@@ -542,6 +619,70 @@ class UtilityMCPServer(BaseMCPServer):
                 "parsed_data": {},
                 "converted_content": "",
                 "is_valid": False,
+                "error": str(e)
+            }
+    
+    async def _get_current_datetime(
+        self,
+        timezone: str = "UTC",
+        format: str = "iso"
+    ) -> Dict[str, Any]:
+        """Get current date and time with timezone support"""
+        try:
+            # Get current time in UTC
+            from datetime import timezone as tz
+            now_utc = datetime.now(tz.utc)
+            
+            # For simplicity, we'll handle UTC and a few common timezones
+            # In production, you'd use pytz or zoneinfo for full timezone support
+            if timezone == "UTC":
+                now = now_utc
+            elif timezone == "America/New_York":
+                # EST (UTC-5) or EDT (UTC-4) based on daylight saving
+                now = now_utc.replace(hour=now_utc.hour - 5)  # Simplified
+            elif timezone == "Asia/Kolkata":
+                # IST (UTC+5:30)
+                now = now_utc.replace(hour=now_utc.hour + 5, minute=now_utc.minute + 30)
+            else:
+                # Default to UTC for unknown timezones
+                now = now_utc
+            
+            # Format the datetime based on requested format
+            if format == "iso":
+                datetime_str = now.isoformat()
+            elif format == "readable":
+                datetime_str = now.strftime("%B %d, %Y at %I:%M:%S %p")
+            elif format == "timestamp":
+                datetime_str = str(int(now.timestamp()))
+            else:
+                datetime_str = now.isoformat()
+            
+            # Get components
+            weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+            components = {
+                "year": now.year,
+                "month": now.month,
+                "day": now.day,
+                "hour": now.hour,
+                "minute": now.minute,
+                "second": now.second,
+                "weekday": weekdays[now.weekday()]
+            }
+            
+            return {
+                "datetime": datetime_str,
+                "timezone": timezone,
+                "unix_timestamp": now.timestamp(),
+                "components": components,
+                "format": format
+            }
+            
+        except Exception as e:
+            return {
+                "datetime": "Error getting datetime",
+                "timezone": timezone,
+                "unix_timestamp": 0,
+                "components": {},
                 "error": str(e)
             }
     

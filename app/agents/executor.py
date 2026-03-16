@@ -324,10 +324,17 @@ class ExecutorAgent:
                 cache_size_after=len(self._persistent_cache)
             )
             
+            # Extract error_type from result if it's a dict with error info
+            error_type = None
+            if isinstance(result, dict) and not result.get("success", True):
+                error_type = result.get("error_type")
+            
             return ToolResult(
                 tool_name=tool_name,
-                success=True,
+                success=isinstance(result, dict) and result.get("success", True) if isinstance(result, dict) else True,
                 result=result,
+                error=result.get("error") if isinstance(result, dict) and not result.get("success", True) else None,
+                error_type=error_type,
                 latency_ms=latency_ms,
                 metadata={"server": server_name, "params": validated_params, "cached": False}
             )
@@ -413,7 +420,22 @@ class ExecutorAgent:
                                     value_type=type(actual_value).__name__
                                 )
                                 return actual_value
-                            else:
+                            # Handle nested structures like customers[0].customer_id
+                            elif isinstance(result.result, dict):
+                                # Try to find field in nested arrays (e.g., customers, items, orders)
+                                for key in ['customers', 'items', 'orders', 'results']:
+                                    if key in result.result and isinstance(result.result[key], list) and len(result.result[key]) > 0:
+                                        first_item = result.result[key][0]
+                                        if isinstance(first_item, dict) and field_name in first_item:
+                                            actual_value = first_item[field_name]
+                                            logger.info_structured(
+                                                "Substituted result reference from nested array",
+                                                reference=value,
+                                                actual_value=actual_value,
+                                                nested_path=f"{key}[0].{field_name}"
+                                            )
+                                            return actual_value
+                                
                                 logger.warning_structured(
                                     "Field not found in result",
                                     step=step_num + 1,
@@ -421,6 +443,13 @@ class ExecutorAgent:
                                     available_fields=list(result.result.keys()) if isinstance(result.result, dict) else "non-dict result"
                                 )
                                 return value  # Keep original if not found
+                            else:
+                                logger.warning_structured(
+                                    "Result is not a dictionary",
+                                    step=step_num + 1,
+                                    result_type=type(result.result).__name__
+                                )
+                                return value
                         else:
                             logger.warning_structured(
                                 "Referenced step failed",

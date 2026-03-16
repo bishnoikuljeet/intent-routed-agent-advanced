@@ -26,6 +26,7 @@ from app.core.logging import logger
 from app.core.telemetry import telemetry
 from app.core.request_context import set_request_id, generate_request_id
 from datetime import datetime
+import hashlib
 
 
 class AgentOrchestrator:
@@ -38,6 +39,10 @@ class AgentOrchestrator:
         self.tool_discovery_service = None
         self.mcp_servers = {}
         self.workflow = None
+        
+        # Query-level cache for identical queries
+        self.query_cache = {}
+        self.cache_ttl = 3600  # 1 hour cache TTL
         
         self._initialized = False
     
@@ -102,6 +107,16 @@ class AgentOrchestrator:
         # Initialize tool discovery service with embeddings and pre-load all tools
         logger.info_structured("Initializing tool discovery service")
         self.tool_discovery_service = ToolDiscoveryService(embeddings=self.embeddings)
+        
+        # Register all MCP server classes for tool discovery
+        from app.mcp.database_server import DatabaseMCPServer
+        self.tool_discovery_service.register_server(ObservabilityMCPServer)
+        self.tool_discovery_service.register_server(KnowledgeMCPServer)
+        self.tool_discovery_service.register_server(LanguageMCPServer)
+        self.tool_discovery_service.register_server(UtilityMCPServer)
+        self.tool_discovery_service.register_server(SystemMCPServer)
+        self.tool_discovery_service.register_server(DatabaseMCPServer)
+        
         await self.tool_discovery_service.initialize_tools()
         logger.info_structured("Tool discovery service initialized and tools cached")
         
@@ -119,11 +134,38 @@ class AgentOrchestrator:
         )
     
     def _initialize_mcp_servers(self):
+        from app.mcp.database_server import DatabaseMCPServer
+        from app.services.llm_service import LLMService
+        
         self.mcp_servers["observability"] = ObservabilityMCPServer()
         self.mcp_servers["knowledge"] = KnowledgeMCPServer(self.rag_retriever)
         self.mcp_servers["language"] = LanguageMCPServer()
         self.mcp_servers["utility"] = UtilityMCPServer()
         self.mcp_servers["system"] = SystemMCPServer(self.tool_registry)
+        
+        # Initialize database server with LLM service and RAG retriever for SQL generation
+        llm_service = LLMService()
+        database_server = DatabaseMCPServer(llm_service=llm_service, rag_retriever=self.rag_retriever)
+        
+        # Configure database connections
+        database_server.configure_databases(
+            sales_config={
+                "host": settings.sales_db_host,
+                "port": settings.sales_db_port,
+                "database_name": settings.sales_db_name,
+                "user": settings.sales_db_user,
+                "password": settings.sales_db_password
+            },
+            inventory_config={
+                "host": settings.inventory_db_host,
+                "port": settings.inventory_db_port,
+                "database_name": settings.inventory_db_name,
+                "user": settings.inventory_db_user,
+                "password": settings.inventory_db_password
+            }
+        )
+        
+        self.mcp_servers["database"] = database_server
         
         logger.info_structured(
             "MCP servers initialized",
@@ -206,6 +248,31 @@ class AgentOrchestrator:
         if not self._initialized:
             await self.initialize()
         
+        # Generate query cache key based on query content
+        query_hash = hashlib.md5(request.query.encode()).hexdigest()
+        cache_key = f"query_{query_hash}"
+        
+        # Check if we have a cached result for this exact query
+        current_time = datetime.utcnow()
+        if cache_key in self.query_cache:
+            cached_result = self.query_cache[cache_key]
+            cache_time = cached_result["timestamp"]
+            
+            # Check if cache is still valid (not expired)
+            if (current_time - cache_time).total_seconds() < self.cache_ttl:
+                logger.info_structured(
+                    "Using cached query result",
+                    query=request.query[:50],
+                    cache_age_seconds=(current_time - cache_time).total_seconds()
+                )
+                
+                # Return cached response with updated metadata
+                cached_response = cached_result["response"]
+                cached_response.execution_time_ms = 0.001  # Near-instant from cache
+                cached_response.metadata["from_cache"] = True
+                cached_response.metadata["cache_timestamp"] = cache_time.isoformat()
+                return cached_response
+        
         request_id = generate_request_id()
         set_request_id(request_id)
         
@@ -243,13 +310,20 @@ class AgentOrchestrator:
                 metadata=final_state.get("metadata", {})
             )
             
+            # Store the response in cache for future identical queries
+            self.query_cache[cache_key] = {
+                "response": response,
+                "timestamp": current_time
+            }
+            
             logger.info_structured(
                 "Query processed successfully",
                 conversation_id=response.conversation_id,
                 confidence=response.confidence,
                 execution_time_ms=execution_time_ms,
                 retry_count=final_state.get("retry_count", 0),
-                request_id=request_id
+                request_id=request_id,
+                cached=False
             )
             
             return response

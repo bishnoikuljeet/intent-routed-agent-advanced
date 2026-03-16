@@ -58,6 +58,10 @@ Requirements:
 4. Infer parameter values semantically from the query context
 5. Identify dependencies between steps
 6. Mark steps that can run in parallel
+7. CRITICAL: For multi-step queries, use result references like "${{step_1.field_name}}"
+   - Step 2 depends on Step 1 → Step 2 parallel_group > Step 1 parallel_group
+   - Use "${{step_X.field_name}}" to pass data from previous steps
+   - Examples: "${{step_1.customer_id}}", "${{step_1.order_id}}", "${{step_1.product_id}}"
 
 TOOL SELECTION STRATEGY:
 1. Read the user's intent and query carefully
@@ -172,7 +176,26 @@ Correct: {{"text": "Bonjour le monde", "source_lang": "french", "target_lang": "
 Wrong: {{"text": "'Bonjour le monde'", "source_lang": "French", "target_lang": "English"}}
 Why wrong: Included quotes AND used capitalized language names
 
-Example 6 - Semantic Tool Matching:
+Example 6 - Multi-Step Database Queries:
+Query: "Show me orders for customer Acme Corporation"
+Analysis: User wants customer orders, but needs customer_id first
+Tool Selection: 2-step process - find customer, then get orders
+Step 1: search_customers to find customer_id for "Acme Corporation"
+Step 2: get_customer_orders using the customer_id from step 1
+Parameter Strategy:
+  - Step 1: Extract customer_name "Acme Corporation" → search_customers.customer_name
+  - Step 2: Use result from step 1 → get_customer_orders.customer_id = "${{step_1.customer_id}}"
+Correct: [
+  {{"step_number": 1, "tool_name": "search_customers", "tool_params": {{"customer_name": "Acme Corporation"}}, "parallel_group": 1}},
+  {{"step_number": 2, "tool_name": "get_customer_orders", "tool_params": {{"customer_id": "${{step_1.customer_id}}"}}, "parallel_group": 2}}
+]
+Wrong: [
+  {{"step_number": 1, "tool_name": "search_customers", "tool_params": {{"customer_name": "Acme Corporation"}}, "parallel_group": 1}},
+  {{"step_number": 2, "tool_name": "get_customer_orders", "tool_params": {{"customer_id": "customer_id"}}, "parallel_group": 2}}
+]
+Why wrong: Used literal string "customer_id" instead of reference to step 1 result
+
+Example 7 - Semantic Tool Matching:
 Query: "Compare X and Y"
 Analysis: User wants comparison/analysis
 Tool Selection: Match query intent to tool capability
@@ -298,6 +321,57 @@ Evaluate:
 1. Is the query specific enough?
 2. Are required parameters present or inferable?
 3. Can this be executed with available tools?
+4. IMPORTANT: If query_database tool is available, natural language questions about data are COMPLETE - the tool converts natural language to SQL automatically.
+
+DYNAMIC COMPLETENESS ASSESSMENT:
+
+1. ENTITY RECOGNITION:
+   - Identify if query contains extractable entities (names, IDs, dates, locations)
+   - Any mention of specific items makes query more complete than generic requests
+
+2. TOOL REQUIREMENT ANALYSIS:
+   - Check if query provides enough information to determine tool category
+   - Look for intent indicators: "find", "show", "list", "details", "summary"
+   - Verify at least one searchable parameter is present
+
+3. PARAMETER INFERENCE RULES:
+   - Descriptive names (customer names, product names) are SUFFICIENT
+   - Natural language dates are SUFFICIENT - system can parse and convert
+   - Order identifiers in any format are SUFFICIENT - system can normalize
+   - Locations and territories are SUFFICIENT - can be used directly
+   - CRITICAL: Tools with DEFAULT values are COMPLETE if only required params are provided
+     * anomaly_detection: Only "values" required (sensitivity/method have defaults)
+     * data_validation: Only "data" required (rules/strict_mode have defaults)
+     * translate_text: Only "text" and "target_lang" required (source_lang has default)
+
+4. MULTI-STEP COMPLETENESS:
+   - Query is COMPLETE if it provides enough information for the FIRST step
+   - Missing secondary parameters (like specific IDs) are acceptable
+   - System can chain tools to resolve missing information
+
+5. CONTEXT COMPLETENESS:
+   - Domain-specific queries (sales, orders, customers) are inherently complete
+   - User intent is clear even if exact parameters need extraction
+   - Database queries benefit from permissive completeness
+
+6. GENERAL PRINCIPLE:
+   - When in doubt, mark as COMPLETE for database queries
+   - Prefer action over clarification when intent is clear
+   - Let the execution layer handle parameter extraction and validation
+   - For database_query intent, assume completeness unless query is completely vague
+   - ANY mention of customer, product, order, or sales should be marked COMPLETE
+
+7. SPECIFIC EXAMPLES:
+   - "Detect anomalies in [100, 105, 102, 500, 98, 103]" → COMPLETE
+     * Has required "values" parameter (the array)
+     * sensitivity/method have defaults (2.0, "zscore")
+     * Should NOT ask for clarification
+   - "Calculate statistics for [1, 2, 3]" → COMPLETE  
+     * Has required "values" parameter
+     * Other parameters are optional
+   - "Translate 'Hello' to Spanish" → COMPLETE
+     * Has required "text" and "target_lang" 
+     * source_lang has default
 
 Output JSON only:
 {{

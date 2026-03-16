@@ -1,6 +1,6 @@
 # Sample User Queries for All Tools
 
-## OBSERVABILITY SERVER (9 Tools)
+## OBSERVABILITY SERVER (10 Tools)
 
 ### service_metrics
 - "What is the current throughput for the API gateway?"
@@ -159,7 +159,7 @@
 
 ---
 
-## UTILITY SERVER (8 Tools)
+## UTILITY SERVER (9 Tools)
 
 ### compare_values
 - "Is 150ms greater than our 100ms latency threshold?"
@@ -216,9 +216,20 @@
     - Should use: json_yaml_parser
     - Expected: YAML format conversion
 
+### get_current_datetime
+- "What's today's date?"
+    - Should use: get_current_datetime
+    - Expected: Current date and time in ISO format
+- "What time is it now in New York?"
+    - Should use: get_current_datetime
+    - Expected: Current date and time in America/New_York timezone
+- "What's the current timestamp?"
+    - Should use: get_current_datetime
+    - Expected: Current Unix timestamp
+
 ---
 
-## SYSTEM SERVER (7 Tools)
+## SYSTEM SERVER (5 Tools)
 
 ### tool_registry_lookup
 - "What tools are available for capacity planning?"
@@ -271,6 +282,48 @@
 - "What are the bottlenecks in the LLM component?"
     - Should use: performance_profiling
     - Expected: Bottleneck identification in the LLM component
+
+---
+
+## DATABASE SERVER (7 Tools)
+
+### get_order_details
+- "Details of order SO-2024-001"
+    - Should use: get_order_details
+    - Expected: Complete order information including customer details, line items, and financial breakdown
+
+### search_customers
+- "List all customers in Northeast territory"
+    - Should use: search_customers
+    - Expected: List of customers in specified territory with full details
+- "Find customer Acme Corporation"
+    - Should use: search_customers
+    - Expected: Customer details for Acme Corporation
+
+### get_sales_summary
+- "What were total sales in 1st March 2024 to 31st March 2024?"
+    - Should use: get_sales_summary
+    - Expected: Total sales, order count, and average order value for specified date range
+
+### get_customer_orders
+- "Show me orders for customer Acme Corporation" (after finding customer_id)
+    - Should use: search_customers
+    - Expected: List of orders for the specified customer
+
+### get_low_stock_items
+- "Which products are low on stock?"
+    - Should use: get_low_stock_items
+    - Expected: List of inventory items below reorder point (Arduino Starter Kit - 8 units, reorder point: 25)
+
+### search_inventory
+- "Find product SKU-005 in inventory"
+    - Should use: search_inventory
+    - Expected: Product details with stock levels and supplier info
+
+### query_database
+- "How many orders do we have in total?"
+    - Should use: query_database
+    - Expected: Dynamic SQL execution with validation (converts to: SELECT COUNT(*) FROM sales_orders)
 
 ---
 

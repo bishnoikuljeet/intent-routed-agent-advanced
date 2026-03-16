@@ -127,11 +127,47 @@ The system uses **MCP servers** to expose tools in a standardized, discoverable 
 - `percentage_difference`: Calculate percentage changes
 - `time_range_calculator`: Compute time durations
 - `statistics_summary`: Generate statistical summaries
+- `trend_analysis`: Analyze trends and forecast future values
+- `anomaly_detection`: Detect anomalies in datasets using statistical methods
+- `data_validation`: Validate data against schema and business rules
 
 #### **System Server**
 - `tool_registry_lookup`: Query available tools
 - `agent_health`: Check agent status
 - `workflow_status`: Monitor workflow execution
+
+#### **Database Server**
+- `get_order_details`: Retrieve complete order information by order number
+- `search_customers`: Search customers by name, territory, or type
+- `get_sales_summary`: Get sales totals and metrics for date ranges
+- `get_customer_orders`: Retrieve all orders for a specific customer
+- `get_low_stock_items`: Find inventory items below reorder threshold
+- `search_inventory`: Search products by SKU, name, or category
+- `query_database`: Execute dynamic SQL queries with natural language (schema-aware, RAG-enhanced)
+
+## 🚀 New Features & Enhancements
+
+### Multi-Step Query Processing
+- **Dynamic Parameter Passing**: Automatic extraction and passing of parameters between query steps
+- **Result References**: Uses `${{step_X.field_name}}` syntax for dependent tool execution
+- **Example**: "Show me orders for customer Acme Corporation" → `search_customers` → `get_customer_orders`
+
+### Advanced Caching System
+- **Query-Level Caching**: Identical queries get instant cached responses (~0.001s)
+- **Tool-Level Caching**: Individual tool results cached with TTL (1 hour default)
+- **Consistent Conversation IDs**: Hash-based IDs enable proper context reuse
+- **Cache Metadata**: Track cache hits, age, and performance metrics
+
+### Enhanced Parameter Handling
+- **Null Parameter Support**: Tools with default parameters handle null values gracefully
+- **Default Value Application**: Automatic fallback to schema defaults when parameters are null
+- **Generic Helper Function**: Reusable parameter handling across all tools
+
+### Complete Database System
+- **Schema-Aware SQL Generation**: RAG-enhanced natural language to SQL conversion
+- **Multi-Database Support**: Sales and inventory databases with automatic schema loading
+- **SQL Validation**: Multi-layer validation with security review and execution safeguards
+- **Sample Data**: Pre-populated with realistic test data including low-stock items
 
 ## 🧠 Memory System
 
@@ -236,6 +272,7 @@ data/vector_store/
 - `azure_openai.txt` - Azure OpenAI capabilities
 - `faiss.txt` - FAISS information
 - `langgraph.txt` - LangGraph framework
+- `databases/init-scripts/mysql-sales/*.sql` - Database schema files (for schema-aware SQL generation)
 
 **How to Add Documents**:
 1. Place `.txt` or `.md` file in `data/docs/`
@@ -268,12 +305,13 @@ data/vector_store/
 
 **Purpose**: Enable semantic tool discovery by LLM
 
-**Contents**: 31 tools from 5 MCP servers
+**Contents**: 38 tools from 6 MCP servers
 - Observability (9 tools)
 - Knowledge (5 tools)
 - Utility (8 tools)
 - System (5 tools)
 - Language (4 tools)
+- Database (7 tools)
 
 **Benefits**:
 - ✅ Dynamic tool discovery
@@ -633,6 +671,11 @@ intent_routed_agent_advanced/
 │   │   ├── telemetry.py                    # Telemetry and observability
 │   │   ├── request_context.py              # Request context management
 │   │   └── session_logger.py               # Session-specific logging
+│   ├── database/                           # Database operations and validation
+│   │   ├── sql_templates.py                # Pre-defined SQL query templates
+│   │   ├── sql_validator.py                # SQL query validation and security
+│   │   ├── query_builder.py                # Dynamic SQL query builder
+│   │   └── connection_manager.py           # Database connection management
 │   ├── graph/                              # LangGraph workflow definitions
 │   │   └── workflow.py                     # Multi-agent workflow implementation
 │   ├── language/                           # Language processing
@@ -644,6 +687,7 @@ intent_routed_agent_advanced/
 │   │   ├── knowledge_server.py             # Semantic search and knowledge retrieval
 │   │   ├── language_server.py              # Translation and language tools
 │   │   ├── utility_server.py               # Calculation and utility tools
+│   │   ├── database_server.py              # Database operations with schema-aware SQL
 │   │   └── system_server.py                # System and registry tools
 │   ├── memory/                             # Conversation memory management
 │   │   ├── manager.py                      # Memory manager with summarization
@@ -680,6 +724,33 @@ intent_routed_agent_advanced/
 │   │   ├── sessions.db                     # SQLite session database
 │   │   └── sessions.json                   # JSON session backup
 │   └── vector_store/                       # FAISS vector embeddings (3 stores)
+├── databases/                              # Database initialization scripts
+│   ├── init-scripts/                       # Database setup and sample data
+│   │   ├── mysql-sales/                     # Sales database schema and data
+│   │   │   ├── 01-init.sql                  # Database schema
+│   │   │   └── 02-data.sql                 # Sample data
+│   │   └── mysql-inventory/                # Inventory database schema and data
+│   │       ├── 01-init.sql                  # Database schema
+│   │       └── 02-data.sql                 # Sample data (includes low-stock items)
+│   └── docker-compose.yml                  # Database container orchestration
+├── docker/                                 # Docker deployment
+│   ├── docker-compose.yml                  # Multi-container orchestration
+│   └── .env.example                        # Docker environment template
+├── frontend/                               # Streamlit web interface
+│   ├── app.py                              # Main Streamlit application
+│   ├── components/                         # UI components
+│   │   ├── chat_interface.py               # Chat UI with message history
+│   │   ├── help_panel.py                   # Help and example queries panel
+│   │   ├── session_manager.py              # Session management UI
+│   │   └── trace_viewer.py                 # Execution trace visualization
+│   ├── services/                           # Frontend services
+│   │   ├── api_client.py                   # Backend API client
+│   │   ├── autocomplete_service.py         # Query autocomplete
+│   │   ├── example_queries_service.py      # Example query management
+│   │   └── session_service.py              # Session service client
+│   ├── config.py                           # Frontend configuration
+│   └── requirements.txt                    # Frontend dependencies
+│   └── vector_store/                       # FAISS vector embeddings (3 stores)
 │       ├── rag/                            # RAG knowledge base (auto-created)
 │       │   ├── rag_index.faiss            # Document embeddings index
 │       │   └── rag_documents.pkl          # Document metadata
@@ -688,7 +759,7 @@ intent_routed_agent_advanced/
 │       │   └── {conv-id}.pkl              # Conversation metadata
 │       └── tools/                          # Tool definitions (auto-created)
 │           ├── tool_definitions.index     # Tool search index
-│           └── tool_definitions.pkl       # 31 tools metadata
+│           └── tool_definitions.pkl       # 41 tools metadata
 ├── docker/                                 # Docker deployment
 │   ├── docker-compose.yml                  # Multi-container orchestration
 │   └── .env.example                        # Docker environment template
@@ -795,6 +866,22 @@ API_PORT=8001
 "What's the percentage difference between current and baseline?"
 ```
 
+**Database queries:**
+```
+"How many orders do we have in total?"
+"Find customer Acme Corporation"
+"What were total sales in March 2024?"
+"Which products are low on stock?"
+"Show me orders for customer Acme Corporation"  # Multi-step query
+```
+
+**Statistical analysis:**
+```
+"Detect anomalies in [100, 105, 102, 500, 98, 103]"
+"Calculate statistics for these latency values: [100, 150]"
+"Forecast the next 5 periods based on [100, 120, 140, 160, 180]"
+```
+
 **Multilingual:**
 ```
 "¿Cuál es la latencia del servicio de autenticación?" (Spanish)
@@ -805,7 +892,7 @@ API_PORT=8001
 
 ✅ **LLM-driven tool selection** - No hardcoded rules  
 ✅ **Multi-agent orchestration** with LangGraph  
-✅ **MCP-based tool ecosystem** (5 servers, 31 tools)  
+✅ **MCP-based tool ecosystem** (6 servers, 41 tools)  
 ✅ **Multilingual input/output** processing  
 ✅ **Conversation memory** with summarization  
 ✅ **RAG retrieval** with FAISS  
@@ -818,6 +905,10 @@ API_PORT=8001
 ✅ **Streamlit UI** with on-demand Suggestions button (no noisy auto-complete)  
 ✅ **Interactive CLI**  
 ✅ **Tool-agnostic & data-agnostic** design  
+✅ **Multi-step query processing** with dynamic parameter passing  
+✅ **Advanced caching system** (query-level + tool-level)  
+✅ **Enhanced parameter handling** with null value support  
+✅ **Complete database system** with schema-aware SQL generation  
 
 ## 🎨 LangGraph Studio Integration
 

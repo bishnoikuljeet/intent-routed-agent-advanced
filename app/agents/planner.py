@@ -56,6 +56,47 @@ class PlannerAgent:
         entities = state.get("extracted_entities", {})
         context_enhanced = state.get("context_enhanced", False)
 
+        # Special handling for vague database queries
+        if intent == "database_query":
+            vague_patterns = [
+                r"^show\s+(me\s+)?orders?$",
+                r"^(list|get)\s+customers?$",
+                r"^sales\s+report$",
+                r"^inventory$",
+                r"^show\s+(me\s+)?products?$",
+                r"^(list|get)\s+items?$"
+            ]
+            
+            import re
+            is_vague = any(re.match(pattern, query.lower().strip()) for pattern in vague_patterns)
+            
+            if is_vague:
+                logger.info_structured(
+                    "Vague database query detected",
+                    conversation_id=state.get("conversation_id"),
+                    query=query
+                )
+                
+                # Generate helpful clarification
+                clarification = self._generate_db_clarification(query)
+                
+                empty_plan = ExecutionPlan(
+                    reasoning="Database query is too vague, needs clarification",
+                    steps=[],
+                    estimated_duration=0.1,
+                    requires_parallel=False
+                )
+                
+                state["execution_plan"] = empty_plan
+                state["needs_clarification"] = True
+                state["missing_info"] = {
+                    "reasoning": "Database query is too vague",
+                    "clarification_question": clarification
+                }
+                state["planning_failed"] = False
+                
+                return state
+        
         # Apply context enhancement if not already done
         if not context_enhanced:
             messages = state.get("messages", [])
@@ -90,8 +131,9 @@ class PlannerAgent:
                 confidence=analysis_data.get("confidence")
             )
 
-            # Only require clarification if confidence is high AND truly missing critical info
-            if analysis_data.get("needs_clarification") and analysis_data.get("confidence", 0) > 0.8:
+            # Only require clarification if confidence is reasonable AND truly missing critical info
+            # Lowered threshold from 0.8 to 0.4 to catch more vague queries early
+            if analysis_data.get("needs_clarification") and analysis_data.get("confidence", 0) > 0.4:
                 logger.info_structured(
                     "LLM detected missing information with high confidence",
                     conversation_id=state.get("conversation_id"),
@@ -129,6 +171,12 @@ class PlannerAgent:
 
         system_prompt = f"""You are an intelligent planning agent. Analyze the user's query and create an OPTIMIZED execution plan that maximizes parallelism while respecting dependencies.
 
+⚠️ CRITICAL RULE FOR DATABASE QUERIES:
+- If user asks "how many orders" or "total" WITHOUT specifying dates → Use query_database tool
+- NEVER add arbitrary date ranges (like 2023-01-01 to 2023-12-31) when user doesn't specify dates
+- "How many orders do we have in total?" → query_database, NOT get_sales_summary
+- Only use get_sales_summary when user explicitly mentions a date range
+
 Available tools:
 {json.dumps(available_tools_dict, indent=2)}
 
@@ -147,6 +195,62 @@ Extracted entities: {json.dumps(entities)}
 Parallel: "Get multiple independent metrics" → All in parallel_group 1
 Sequential: "Get data then process it" → Group 1 (retrieve), Group 2 (process using ${{step_1.value}})
 Hybrid: "Get multiple items then aggregate" → Group 1 (multiple parallel), Group 2 (aggregate using ${{step_1.value}}, ${{step_2.value}}, etc.)
+
+DYNAMIC TOOL SELECTION FRAMEWORK:
+
+1. ANALYZE USER INTENT:
+   - Identify key entities: order IDs, customer names, product SKUs, dates, territories
+   - Determine primary goal: retrieve details, search lists, get summaries, check status
+
+2. MATCH TOOLS BY CAPABILITY:
+   - Read each tool's description and input schema
+   - Match query intent to tool capabilities
+   - Extract required parameters from natural language
+
+3. PARAMETER EXTRACTION STRATEGY:
+   - Order IDs: Extract any alphanumeric patterns (SO-####, ####, order numbers)
+   - Names: Extract proper nouns and quoted strings
+   - Dates: Parse natural language dates and convert to required format
+   - Quantities: Extract numbers and units
+   - Locations: Extract place names and territories
+
+4. MULTI-STEP PLANNING:
+   - If tool requires specific ID but query provides descriptive name:
+     Step 1: Use search tool to find ID
+     Step 2: Use ID with target tool
+   - Use ${{step_X.field_name}} references for dependencies
+
+5. FALLBACK STRATEGY:
+   - If no exact tool match, use query_database for natural language queries
+   - If multiple tools possible, choose most specific one
+   - If uncertain, prefer tools with fewer required parameters
+
+6. ADAPTIVE MAPPING:
+   - Map query keywords to tool capabilities dynamically
+   - "details", "information", "show" → lookup tools
+   - "find", "search", "list" → search tools  
+   - "summary", "total", "count", "average" → aggregation tools
+   - "status", "check", "verify" → status tools
+
+7. CONCRETE MAPPING EXAMPLES:
+   - "total sales" + date range → get_sales_summary with dates
+   - "how many orders" + date range → get_sales_summary with dates
+   - "average order value" + date range → get_sales_summary with dates
+   - "total sales/average value" WITHOUT dates → query_database (natural language)
+   - "how many orders" WITHOUT dates → query_database (natural language)
+   - "details of order", "order information" → get_order_details
+   - "find customer", "list customers" → search_customers
+   - "orders for customer" → search_customers → get_customer_orders (multi-step)
+   - "low stock", "reorder" → get_low_stock_items
+   - "find product" → search_inventory
+
+8. DATE HANDLING STRATEGY - CRITICAL:
+   - Queries with specific dates → Use get_sales_summary with extracted dates
+   - Queries with "total" but NO dates → Use query_database (NOT get_sales_summary)
+   - NEVER invent or assume date ranges when user doesn't specify them
+   - "How many orders total" = query_database, NOT get_sales_summary with random dates
+   - "Average order value" without dates = query_database, NOT get_sales_summary
+   - If you must use get_sales_summary without dates, DO NOT add arbitrary year defaults
 
 
 === FIELD REFERENCE GUIDE ===
@@ -348,6 +452,7 @@ CRITICAL: Respond with ONLY valid JSON, nothing else."""
             "calculation_compare": ["utility"],  # Calculations, comparisons
             "data_validation": ["utility"],  # Data validation, format checking
             "system_question": ["system"],  # System tools
+            "database_query": ["database"],  # Database retrieval tools
             "general_query": None  # No filtering for general queries
         }
         
@@ -429,6 +534,38 @@ CRITICAL: Respond with ONLY valid JSON, nothing else."""
                 "suggested_examples": [],
                 "confidence": 0.5
             }
+    
+    def _generate_db_clarification(self, query: str) -> str:
+        """Generate helpful clarification question for vague database queries"""
+        
+        query_lower = query.lower()
+        
+        if "order" in query_lower:
+            return """Which orders would you like to see? Please specify:
+- A specific order number (e.g., SO-2024-001)
+- A date range (e.g., orders from March 2024)
+- A customer name"""
+        
+        elif "customer" in query_lower:
+            return """Which customers are you looking for? Please specify:
+- Customer name (e.g., Acme Corporation)
+- Territory (Northeast, Southeast, Midwest, West, Southwest)
+- Customer type (enterprise, mid-market, small-business)"""
+        
+        elif "sales" in query_lower:
+            return """What sales information do you need? Please specify:
+- Date range (e.g., March 2024 or 2024-03-01 to 2024-03-31)
+- Specific customer or sales rep
+- Type of summary (total sales, order count, average order value)"""
+        
+        elif any(word in query_lower for word in ["inventory", "product", "item", "stock"]):
+            return """What inventory information do you need? Please specify:
+- Specific product SKU or name
+- Category
+- Stock status (e.g., low stock items)
+- Search criteria"""
+        
+        return "Could you provide more details about what you're looking for? Please specify filters, date ranges, or specific identifiers."
     
     async def _generate_minimal_plan(self, query: str, available_tools: dict) -> ExecutionPlan:
         """

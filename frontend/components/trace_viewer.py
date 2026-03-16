@@ -1,8 +1,8 @@
 import streamlit as st
-from typing import Dict, Any
 import json
-import plotly.graph_objects as go
+import uuid
 from datetime import datetime
+from typing import Dict, Any
 
 
 class TraceViewer:
@@ -91,26 +91,28 @@ class TraceViewer:
             # Status icon
             status_icon = "✅" if success else "❌"
             
-            with st.expander(f"{status_icon} {tool_name} - {latency:.2f}ms", expanded=False):
-                # Tool details
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.metric("Latency", f"{latency:.2f}ms")
-                    st.metric("Status", "Success" if success else "Failed")
-                
-                with col2:
-                    st.metric("Server", tool.get('server', 'Unknown'))
-                    st.metric("Agent", tool.get('agent', 'Unknown'))
-                
-                # Parameters
-                if params:
-                    st.markdown("**Parameters:**")
-                    st.json(params)
-                
-                # Full tool data
-                with st.expander("View Raw Data"):
-                    st.json(tool)
+            # Tool details (no nested expander)
+            st.write(f"**{status_icon} {tool_name} - {latency:.2f}ms**")
+            
+            # Tool details in columns
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.metric("Latency", f"{latency:.2f}ms")
+                st.metric("Status", "Success" if success else "Failed")
+            
+            with col2:
+                st.metric("Server", tool.get('server', 'Unknown'))
+                st.metric("Agent", tool.get('agent', 'Unknown'))
+            
+            # Parameters section
+            if params:
+                st.markdown("**Parameters:**")
+                st.json(params)
+            
+            # Separator between tools
+            if i < len(tools) - 1:
+                st.divider()
     
     def _render_export(self, trace_data: Dict[str, Any]):
         """Render export options"""
@@ -121,18 +123,18 @@ class TraceViewer:
         with col1:
             # JSON export
             trace_json = json.dumps(trace_data, indent=2)
-            # Generate unique key based on trace data hash
-            trace_hash = hash(trace_json)
+            # Generate unique key using UUID to avoid duplicates
+            unique_id = str(uuid.uuid4())[:8]
             st.download_button(
                 label="📄 Download JSON",
                 data=trace_json,
                 file_name=f"execution_trace_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                 mime="application/json",
                 use_container_width=True,
-                key=f"download_trace_{trace_hash}"
+                key=f"download_trace_{unique_id}"
             )
         
         with col2:
             # Copy to clipboard (via text area)
-            if st.button("📋 Copy to Clipboard", use_container_width=True, key=f"copy_trace_{trace_hash}"):
+            if st.button("📋 Copy to Clipboard", use_container_width=True, key=f"copy_trace_{unique_id}"):
                 st.code(trace_json, language="json")

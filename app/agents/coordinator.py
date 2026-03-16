@@ -18,7 +18,11 @@ class CoordinatorAgent:
         )
         
         if not state.get("conversation_id"):
-            state["conversation_id"] = str(uuid.uuid4())
+            # Generate consistent conversation ID based on query hash for caching
+            import hashlib
+            query = state.get("current_query", "")
+            query_hash = hashlib.md5(query.encode()).hexdigest()[:16]
+            state["conversation_id"] = f"query_{query_hash}"
         
         if not state.get("metadata"):
             state["metadata"] = {}
