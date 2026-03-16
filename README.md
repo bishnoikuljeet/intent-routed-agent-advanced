@@ -910,7 +910,34 @@ API_PORT=8001
 ✅ **Enhanced parameter handling** with null value support  
 ✅ **Complete database system** with schema-aware SQL generation  
 
-## 🎨 LangGraph Studio Integration
+## � Demo Videos
+
+### 📹 Available Demonstrations
+
+**🌟 Basic Demo** - `assets/demos/basic_demo.mp4`
+- Multi-agent workflow execution
+- Tool selection and orchestration
+- Language processing capabilities
+- Memory management and context
+
+**🚀 Advanced Demo** - `assets/demos/database_cache_demo.mp4` *(New!)*
+- **Database Operations**: Customer searches, order lookups, inventory queries
+- **Multi-step Queries**: Complex workflows with parameter passing
+- **Advanced Caching**: 99.995% performance improvement with query-level caching
+- **Security Features**: Malicious intent detection and safe query handling
+- **Real-time Performance**: See cached queries respond in ~0.001 seconds
+
+### 🎯 Key Highlights in Advanced Demo
+
+- **Database System**: Schema-aware SQL generation with RAG enhancement
+- **Caching Performance**: Instant responses for repeated queries
+- **Multi-step Workflows**: "Show me orders for customer Acme Corporation"
+- **Security**: Automatic blocking of malicious database operations
+- **Parameter Handling**: Smart default value application
+
+*See `assets/demos/README.md` for detailed video descriptions*
+
+## �🎨 LangGraph Studio Integration
 
 Visualize and debug the workflow:
 
